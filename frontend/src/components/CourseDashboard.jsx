@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useCourses } from "../hooks/useCourses";
+import CreateCourseForm from "./CreateCourseForm";
 
 function masteryColor(score) {
   if (score >= 0.75) return "bg-mastery-high";
@@ -53,34 +55,67 @@ function CourseCard({ course, onSelect }) {
 }
 
 export default function CourseDashboard({ onSelectCourse }) {
-  const { courses, isLoading, error, refresh } = useCourses();
+  const { courses, isLoading, error, refresh, addCourse } = useCourses();
+  const [isCreating, setIsCreating] = useState(false);
+
+  const header = (
+    <div className="mb-6 flex items-center justify-between">
+      <h2 className="text-lg font-semibold text-gray-900">Your Courses</h2>
+      {!isCreating && (
+        <button
+          type="button"
+          onClick={() => setIsCreating(true)}
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          + New Course
+        </button>
+      )}
+    </div>
+  );
+
+  const createForm = isCreating && (
+    <CreateCourseForm onCreate={addCourse} onCancel={() => setIsCreating(false)} />
+  );
 
   if (isLoading) {
-    return <p className="text-sm text-gray-500">Loading your courses…</p>;
+    return (
+      <section>
+        {header}
+        <p className="text-sm text-gray-500">Loading your courses…</p>
+      </section>
+    );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p className="text-sm text-red-700">{error}</p>
-        <button
-          type="button"
-          onClick={refresh}
-          className="mt-2 text-sm font-medium text-red-700 underline"
-        >
-          Retry
-        </button>
-      </div>
+      <section>
+        {header}
+        {createForm}
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm text-red-700">{error}</p>
+          <button
+            type="button"
+            onClick={refresh}
+            className="mt-2 text-sm font-medium text-red-700 underline"
+          >
+            Retry
+          </button>
+        </div>
+      </section>
     );
   }
 
   if (courses.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">
-        <p className="text-sm text-gray-500">
-          No courses yet. Create one to start building your learning path.
-        </p>
-      </div>
+      <section>
+        {header}
+        {createForm}
+        <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">
+          <p className="text-sm text-gray-500">
+            No courses yet. Create one to start building your learning path.
+          </p>
+        </div>
+      </section>
     );
   }
 
@@ -90,6 +125,9 @@ export default function CourseDashboard({ onSelectCourse }) {
 
   return (
     <section>
+      {header}
+      {createForm}
+
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl bg-indigo-50 p-4">
           <p className="text-xs font-medium text-indigo-500">Active Courses</p>
