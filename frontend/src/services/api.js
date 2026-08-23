@@ -22,6 +22,16 @@ export async function createCourse({ title, code, description }) {
   return data;
 }
 
+export async function fetchAvailableCourses() {
+  const { data } = await apiClient.get("/courses/available");
+  return data;
+}
+
+export async function enrollInCourse(courseId) {
+  const { data } = await apiClient.post(`/courses/${courseId}/enroll`);
+  return data;
+}
+
 export async function uploadResource(courseId, file, resourceType) {
   const formData = new FormData();
   formData.append("file", file);

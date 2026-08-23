@@ -27,3 +27,4 @@ class CourseSummaryResponse(CourseResponse):
     overall_mastery: float = Field(ge=0.0, le=1.0)
     total_concepts: int
     weak_concept_count: int
+    enrolled_count: int | None = None

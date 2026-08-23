@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_role
 from app.db.postgres import get_db
 from app.models.concept import Concept
 from app.models.course import Course
+from app.models.enrollment import Enrollment
 from app.models.knowledge_profile import StudentKnowledgeProfile
 from app.models.user import User
 from app.schemas.course import CourseCreateRequest, CourseResponse, CourseSummaryResponse
@@ -21,7 +22,7 @@ _MASTERY_GAP_THRESHOLD = 0.6
 def create_course(
     payload: CourseCreateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("instructor")),
 ) -> CourseResponse:
     existing = (
         db.query(Course)
@@ -50,7 +51,15 @@ def create_course(
 def list_courses(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ) -> list[CourseSummaryResponse]:
-    courses = db.query(Course).filter(Course.user_id == current_user.id).all()
+    if current_user.role == "instructor":
+        courses = db.query(Course).filter(Course.user_id == current_user.id).all()
+    else:
+        courses = (
+            db.query(Course)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .filter(Enrollment.student_id == current_user.id)
+            .all()
+        )
 
     summaries: list[CourseSummaryResponse] = []
     for course in courses:
@@ -58,25 +67,39 @@ def list_courses(
             db.query(func.count(Concept.id)).filter(Concept.course_id == course.id).scalar() or 0
         )
 
-        mastery_row = (
-            db.query(func.avg(StudentKnowledgeProfile.mastery_score))
-            .join(Concept, Concept.id == StudentKnowledgeProfile.concept_id)
-            .filter(Concept.course_id == course.id, StudentKnowledgeProfile.user_id == current_user.id)
-            .scalar()
-        )
-        overall_mastery = float(mastery_row) if mastery_row is not None else 0.0
-
-        weak_concept_count = (
-            db.query(func.count(StudentKnowledgeProfile.id))
-            .join(Concept, Concept.id == StudentKnowledgeProfile.concept_id)
-            .filter(
-                Concept.course_id == course.id,
-                StudentKnowledgeProfile.user_id == current_user.id,
-                StudentKnowledgeProfile.mastery_score < _MASTERY_GAP_THRESHOLD,
+        if current_user.role == "instructor":
+            enrolled_count = (
+                db.query(func.count(Enrollment.id))
+                .filter(Enrollment.course_id == course.id)
+                .scalar()
+                or 0
             )
-            .scalar()
-            or 0
-        )
+            overall_mastery = 0.0
+            weak_concept_count = 0
+        else:
+            enrolled_count = None
+            mastery_row = (
+                db.query(func.avg(StudentKnowledgeProfile.mastery_score))
+                .join(Concept, Concept.id == StudentKnowledgeProfile.concept_id)
+                .filter(
+                    Concept.course_id == course.id,
+                    StudentKnowledgeProfile.user_id == current_user.id,
+                )
+                .scalar()
+            )
+            overall_mastery = float(mastery_row) if mastery_row is not None else 0.0
+
+            weak_concept_count = (
+                db.query(func.count(StudentKnowledgeProfile.id))
+                .join(Concept, Concept.id == StudentKnowledgeProfile.concept_id)
+                .filter(
+                    Concept.course_id == course.id,
+                    StudentKnowledgeProfile.user_id == current_user.id,
+                    StudentKnowledgeProfile.mastery_score < _MASTERY_GAP_THRESHOLD,
+                )
+                .scalar()
+                or 0
+            )
 
         summaries.append(
             CourseSummaryResponse(
@@ -89,9 +112,48 @@ def list_courses(
                 overall_mastery=round(overall_mastery, 2),
                 total_concepts=total_concepts,
                 weak_concept_count=weak_concept_count,
+                enrolled_count=enrolled_count,
             )
         )
     return summaries
+
+
+@router.get("/available", response_model=list[CourseResponse])
+def list_available_courses(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("student")),
+) -> list[CourseResponse]:
+    enrolled_course_ids = db.query(Enrollment.course_id).filter(
+        Enrollment.student_id == current_user.id
+    )
+    courses = db.query(Course).filter(~Course.id.in_(enrolled_course_ids)).all()
+    return courses
+
+
+@router.post("/{course_id}/enroll", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
+def enroll_in_course(
+    course_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("student")),
+) -> CourseResponse:
+    course = db.get(Course, course_id)
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found.")
+
+    existing = (
+        db.query(Enrollment)
+        .filter(Enrollment.course_id == course_id, Enrollment.student_id == current_user.id)
+        .first()
+    )
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="You are already enrolled in this course."
+        )
+
+    enrollment = Enrollment(course_id=course_id, student_id=current_user.id)
+    db.add(enrollment)
+    db.commit()
+    return course
 
 
 @router.get("/{course_id}", response_model=CourseResponse)
@@ -100,7 +162,7 @@ def get_course(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> CourseResponse:
-    course = get_owned_course_or_404(db, course_id, current_user.id)
+    course = get_accessible_course_or_404(db, course_id, current_user)
     return course
 
 
@@ -110,4 +172,24 @@ def get_owned_course_or_404(db: Session, course_id: uuid.UUID, user_id: uuid.UUI
     )
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found.")
+    return course
+
+
+def get_accessible_course_or_404(db: Session, course_id: uuid.UUID, user: User) -> Course:
+    course = db.get(Course, course_id)
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found.")
+
+    if user.role == "instructor":
+        if course.user_id != user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found.")
+    else:
+        enrolled = (
+            db.query(Enrollment)
+            .filter(Enrollment.course_id == course_id, Enrollment.student_id == user.id)
+            .first()
+        )
+        if enrolled is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found.")
+
     return course

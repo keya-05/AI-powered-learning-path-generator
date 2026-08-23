@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from sqlalchemy.orm import Session
 
 from app.api.courses import get_owned_course_or_404
-from app.api.deps import get_current_user
+from app.api.deps import require_role
 from app.db.postgres import get_db
 from app.models.resource import Resource
 from app.models.user import User
@@ -28,7 +28,7 @@ async def upload_resource(
     resource_type: str = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("instructor")),
 ) -> ResourceResponse:
     get_owned_course_or_404(db, course_id, current_user.id)
 

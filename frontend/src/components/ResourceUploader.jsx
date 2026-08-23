@@ -22,16 +22,16 @@ function isAcceptedFile(file) {
 
 function PendingFileRow({ entry, onTypeChange, onRemove }) {
   const statusStyles = {
-    pending: "text-gray-400",
-    uploading: "text-indigo-500",
-    success: "text-emerald-600",
-    error: "text-red-600",
+    pending: "text-gray-400 dark:text-slate-500",
+    uploading: "text-indigo-500 dark:text-indigo-400",
+    success: "text-emerald-600 dark:text-emerald-400",
+    error: "text-red-600 dark:text-red-400",
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-gray-800">{entry.file.name}</p>
+        <p className="truncate text-sm font-medium text-gray-800 dark:text-slate-200">{entry.file.name}</p>
         <p className={`text-xs ${statusStyles[entry.status]}`}>
           {entry.status === "error" ? entry.errorMessage : entry.status}
         </p>
@@ -41,7 +41,7 @@ function PendingFileRow({ entry, onTypeChange, onRemove }) {
         value={entry.resourceType}
         onChange={(event) => onTypeChange(entry.id, event.target.value)}
         disabled={entry.status === "uploading" || entry.status === "success"}
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+        className="rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
       >
         {RESOURCE_TYPES.map((type) => (
           <option key={type.value} value={type.value}>
@@ -146,13 +146,17 @@ export default function ResourceUploader({ courseId, onUploadComplete }) {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
-          isDragging ? "border-indigo-400 bg-indigo-50" : "border-gray-300 bg-gray-50"
+          isDragging
+            ? "border-indigo-400 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-500/10"
+            : "border-gray-300 bg-gray-50 dark:border-slate-700 dark:bg-slate-900"
         }`}
       >
-        <p className="text-sm font-medium text-gray-700">
+        <p className="text-sm font-medium text-gray-700 dark:text-slate-300">
           Drag & drop syllabi, notes, PYQs, or slides here
         </p>
-        <p className="mt-1 text-xs text-gray-400">PDF, PPTX, or DOCX — or click to browse</p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">
+          PDF, PPTX, or DOCX — or click to browse
+        </p>
         <input
           ref={fileInputRef}
           type="file"

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useCourses } from "../hooks/useCourses";
 import CreateCourseForm from "./CreateCourseForm";
 
 function masteryColor(score) {
@@ -12,11 +11,11 @@ function MasteryBar({ score }) {
   const percentage = Math.round(score * 100);
   return (
     <div className="w-full">
-      <div className="flex justify-between text-xs text-gray-500 mb-1">
+      <div className="flex justify-between text-xs text-gray-500 mb-1 dark:text-slate-400">
         <span>Mastery</span>
         <span>{percentage}%</span>
       </div>
-      <div className="h-2 w-full rounded-full bg-gray-200">
+      <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-slate-800">
         <div
           className={`h-2 rounded-full ${masteryColor(score)} transition-all`}
           style={{ width: `${percentage}%` }}
@@ -26,42 +25,75 @@ function MasteryBar({ score }) {
   );
 }
 
-function CourseCard({ course, onSelect }) {
-  const hasGaps = course.weak_concept_count > 0;
+function CourseCard({ course, variant, onSelect }) {
+  const hasGaps = variant === "student" && course.weak_concept_count > 0;
+  const clickable = Boolean(onSelect);
 
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect?.(course)}
-      className="text-left w-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400"
-    >
+  const content = (
+    <>
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-semibold text-gray-900">{course.title}</h3>
-          <p className="text-sm text-gray-500">{course.code}</p>
+          <h3 className="font-semibold text-gray-900 dark:text-slate-100">{course.title}</h3>
+          <p className="text-sm text-gray-500 dark:text-slate-400">{course.code}</p>
         </div>
         {hasGaps && (
-          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400">
             {course.weak_concept_count} gap{course.weak_concept_count > 1 ? "s" : ""}
           </span>
         )}
       </div>
 
-      <MasteryBar score={course.overall_mastery} />
+      {variant === "student" ? (
+        <>
+          <MasteryBar score={course.overall_mastery} />
+          <p className="mt-3 text-xs text-gray-400 dark:text-slate-500">
+            {course.total_concepts} concepts tracked
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500 dark:text-slate-400">
+          {course.enrolled_count ?? 0} student{course.enrolled_count === 1 ? "" : "s"} enrolled
+        </p>
+      )}
+    </>
+  );
 
-      <p className="mt-3 text-xs text-gray-400">{course.total_concepts} concepts tracked</p>
+  if (!clickable) {
+    return (
+      <div className="w-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(course)}
+      className="text-left w-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-500"
+    >
+      {content}
     </button>
   );
 }
 
-export default function CourseDashboard({ onSelectCourse }) {
-  const { courses, isLoading, error, refresh, addCourse } = useCourses();
+export default function CourseDashboard({
+  variant = "student",
+  courses,
+  isLoading,
+  error,
+  onRefresh,
+  onCreateCourse,
+  onSelectCourse,
+}) {
   const [isCreating, setIsCreating] = useState(false);
+  const canCreate = variant === "instructor" && Boolean(onCreateCourse);
+  const title = variant === "instructor" ? "Your Courses" : "Your Enrolled Courses";
 
   const header = (
     <div className="mb-6 flex items-center justify-between">
-      <h2 className="text-lg font-semibold text-gray-900">Your Courses</h2>
-      {!isCreating && (
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
+      {canCreate && !isCreating && (
         <button
           type="button"
           onClick={() => setIsCreating(true)}
@@ -73,15 +105,15 @@ export default function CourseDashboard({ onSelectCourse }) {
     </div>
   );
 
-  const createForm = isCreating && (
-    <CreateCourseForm onCreate={addCourse} onCancel={() => setIsCreating(false)} />
+  const createForm = canCreate && isCreating && (
+    <CreateCourseForm onCreate={onCreateCourse} onCancel={() => setIsCreating(false)} />
   );
 
   if (isLoading) {
     return (
       <section>
         {header}
-        <p className="text-sm text-gray-500">Loading your courses…</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400">Loading courses…</p>
       </section>
     );
   }
@@ -91,12 +123,12 @@ export default function CourseDashboard({ onSelectCourse }) {
       <section>
         {header}
         {createForm}
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
           <button
             type="button"
-            onClick={refresh}
-            className="mt-2 text-sm font-medium text-red-700 underline"
+            onClick={onRefresh}
+            className="mt-2 text-sm font-medium text-red-700 underline dark:text-red-400"
           >
             Retry
           </button>
@@ -110,44 +142,76 @@ export default function CourseDashboard({ onSelectCourse }) {
       <section>
         {header}
         {createForm}
-        <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">
-          <p className="text-sm text-gray-500">
-            No courses yet. Create one to start building your learning path.
+        <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center dark:border-slate-700">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
+            {variant === "instructor"
+              ? "No courses yet. Create one to start sharing material with students."
+              : "You're not enrolled in any courses yet. Browse available courses below."}
           </p>
         </div>
       </section>
     );
   }
 
-  const averageMastery =
-    courses.reduce((sum, course) => sum + course.overall_mastery, 0) / courses.length;
-  const totalGaps = courses.reduce((sum, course) => sum + course.weak_concept_count, 0);
-
   return (
     <section>
       {header}
       {createForm}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl bg-indigo-50 p-4">
-          <p className="text-xs font-medium text-indigo-500">Active Courses</p>
-          <p className="mt-1 text-2xl font-bold text-indigo-900">{courses.length}</p>
+      {variant === "student" ? (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-xl bg-indigo-50 p-4 dark:bg-indigo-500/10">
+            <p className="text-xs font-medium text-indigo-500 dark:text-indigo-300">
+              Active Courses
+            </p>
+            <p className="mt-1 text-2xl font-bold text-indigo-900 dark:text-indigo-200">
+              {courses.length}
+            </p>
+          </div>
+          <div className="rounded-xl bg-emerald-50 p-4 dark:bg-emerald-500/10">
+            <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+              Overall Mastery
+            </p>
+            <p className="mt-1 text-2xl font-bold text-emerald-900 dark:text-emerald-200">
+              {Math.round(
+                (courses.reduce((sum, course) => sum + course.overall_mastery, 0) /
+                  courses.length) *
+                  100
+              )}
+              %
+            </p>
+          </div>
+          <div className="rounded-xl bg-red-50 p-4 dark:bg-red-500/10">
+            <p className="text-xs font-medium text-red-500 dark:text-red-300">Knowledge Gaps</p>
+            <p className="mt-1 text-2xl font-bold text-red-900 dark:text-red-200">
+              {courses.reduce((sum, course) => sum + course.weak_concept_count, 0)}
+            </p>
+          </div>
         </div>
-        <div className="rounded-xl bg-emerald-50 p-4">
-          <p className="text-xs font-medium text-emerald-600">Overall Mastery</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-900">
-            {Math.round(averageMastery * 100)}%
-          </p>
+      ) : (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-indigo-50 p-4 dark:bg-indigo-500/10">
+            <p className="text-xs font-medium text-indigo-500 dark:text-indigo-300">
+              Your Courses
+            </p>
+            <p className="mt-1 text-2xl font-bold text-indigo-900 dark:text-indigo-200">
+              {courses.length}
+            </p>
+          </div>
+          <div className="rounded-xl bg-emerald-50 p-4 dark:bg-emerald-500/10">
+            <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+              Total Students Enrolled
+            </p>
+            <p className="mt-1 text-2xl font-bold text-emerald-900 dark:text-emerald-200">
+              {courses.reduce((sum, course) => sum + (course.enrolled_count ?? 0), 0)}
+            </p>
+          </div>
         </div>
-        <div className="rounded-xl bg-red-50 p-4">
-          <p className="text-xs font-medium text-red-500">Knowledge Gaps</p>
-          <p className="mt-1 text-2xl font-bold text-red-900">{totalGaps}</p>
-        </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {courses.map((course) => (
-          <CourseCard key={course.id} course={course} onSelect={onSelectCourse} />
+          <CourseCard key={course.id} course={course} variant={variant} onSelect={onSelectCourse} />
         ))}
       </div>
     </section>
