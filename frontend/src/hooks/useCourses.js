@@ -26,7 +26,7 @@ export function useCourses() {
   const addCourse = useCallback(
     async (courseInput) => {
       const newCourse = await createCourse(courseInput);
-      setCourses((previous) => [...previous, { ...newCourse, overall_mastery: 0, total_concepts: 0, weak_concept_count: 0 }]);
+      setCourses((previous) => [...previous, { ...newCourse, overall_mastery: 0, total_concepts: 0, weak_concept_count: 0, enrolled_count: 0 }]);
       return newCourse;
     },
     []

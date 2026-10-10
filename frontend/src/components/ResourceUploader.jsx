@@ -1,3 +1,4 @@
+import { CloudUpload, FileText, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { uploadResource } from "../services/api";
 
@@ -11,8 +12,21 @@ const RESOURCE_TYPES = [
   { value: "syllabus", label: "Syllabus" },
   { value: "pyq", label: "PYQ" },
   { value: "notes", label: "Notes" },
-  { value: "ppt", label: "PPT" },
+  { value: "ppt", label: "Slides" },
 ];
+
+const STATUS_LABEL = {
+  pending: "Ready to upload",
+  uploading: "Uploading…",
+  success: "Uploaded",
+};
+
+const STATUS_STYLE = {
+  pending: "text-slate-400 dark:text-slate-500",
+  uploading: "text-indigo-600 dark:text-indigo-400",
+  success: "text-emerald-600 dark:text-emerald-400",
+  error: "text-rose-600 dark:text-rose-400",
+};
 
 function isAcceptedFile(file) {
   if (ACCEPTED_MIME_TYPES[file.type]) return true;
@@ -21,27 +35,24 @@ function isAcceptedFile(file) {
 }
 
 function PendingFileRow({ entry, onTypeChange, onRemove }) {
-  const statusStyles = {
-    pending: "text-gray-400 dark:text-slate-500",
-    uploading: "text-indigo-500 dark:text-indigo-400",
-    success: "text-emerald-600 dark:text-emerald-400",
-    error: "text-red-600 dark:text-red-400",
-  };
+  const locked = entry.status === "uploading" || entry.status === "success";
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 dark:border-slate-800">
+      <FileText className="h-4 w-4 flex-none text-slate-400" strokeWidth={1.75} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-gray-800 dark:text-slate-200">{entry.file.name}</p>
-        <p className={`text-xs ${statusStyles[entry.status]}`}>
-          {entry.status === "error" ? entry.errorMessage : entry.status}
+        <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{entry.file.name}</p>
+        <p className={`text-xs ${STATUS_STYLE[entry.status]}`}>
+          {entry.status === "error" ? entry.errorMessage : STATUS_LABEL[entry.status]}
         </p>
       </div>
 
       <select
         value={entry.resourceType}
         onChange={(event) => onTypeChange(entry.id, event.target.value)}
-        disabled={entry.status === "uploading" || entry.status === "success"}
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+        disabled={locked}
+        className="input w-auto py-1.5 disabled:opacity-50"
+        aria-label="Resource type"
       >
         {RESOURCE_TYPES.map((type) => (
           <option key={type.value} value={type.value}>
@@ -50,14 +61,14 @@ function PendingFileRow({ entry, onTypeChange, onRemove }) {
         ))}
       </select>
 
-      {entry.status !== "uploading" && entry.status !== "success" && (
+      {!locked && (
         <button
           type="button"
           onClick={() => onRemove(entry.id)}
-          className="text-sm text-gray-400 hover:text-red-500"
+          className="btn-icon h-8 w-8 hover:text-rose-600 dark:hover:text-rose-400"
           aria-label={`Remove ${entry.file.name}`}
         >
-          ✕
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>
@@ -102,9 +113,7 @@ export default function ResourceUploader({ courseId, onUploadComplete }) {
 
   const uploadEntry = async (entry) => {
     setEntries((previous) =>
-      previous.map((item) =>
-        item.id === entry.id ? { ...item, status: "uploading" } : item
-      )
+      previous.map((item) => (item.id === entry.id ? { ...item, status: "uploading" } : item))
     );
     try {
       const uploaded = await uploadResource(courseId, entry.file, entry.resourceType);
@@ -116,11 +125,7 @@ export default function ResourceUploader({ courseId, onUploadComplete }) {
       setEntries((previous) =>
         previous.map((item) =>
           item.id === entry.id
-            ? {
-                ...item,
-                status: "error",
-                errorMessage: err.response?.data?.detail || "Upload failed.",
-              }
+            ? { ...item, status: "error", errorMessage: err.response?.data?.detail || "Upload failed." }
             : item
         )
       );
@@ -145,18 +150,19 @@ export default function ResourceUploader({ courseId, onUploadComplete }) {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+        className={`flex cursor-pointer flex-col items-center rounded-xl border border-dashed px-6 py-10 text-center transition-colors ${
           isDragging
-            ? "border-indigo-400 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-500/10"
-            : "border-gray-300 bg-gray-50 dark:border-slate-700 dark:bg-slate-900"
+            ? "border-indigo-400 bg-indigo-50/60 dark:border-indigo-500 dark:bg-indigo-500/10"
+            : "border-slate-300 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800/40"
         }`}
       >
-        <p className="text-sm font-medium text-gray-700 dark:text-slate-300">
-          Drag & drop syllabi, notes, PYQs, or slides here
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+          <CloudUpload className="h-5 w-5" strokeWidth={1.75} />
+        </span>
+        <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-200">
+          Drop syllabi, notes, PYQs or slides here
         </p>
-        <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">
-          PDF, PPTX, or DOCX — or click to browse
-        </p>
+        <p className="muted mt-1 text-xs">PDF, PPTX or DOCX, or click to browse</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -182,9 +188,9 @@ export default function ResourceUploader({ courseId, onUploadComplete }) {
             type="button"
             onClick={handleUploadAll}
             disabled={pendingCount === 0}
-            className="mt-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-primary mt-2"
           >
-            Upload {pendingCount > 0 ? `(${pendingCount})` : ""}
+            Upload{pendingCount > 0 ? ` ${pendingCount} file${pendingCount === 1 ? "" : "s"}` : ""}
           </button>
         </div>
       )}

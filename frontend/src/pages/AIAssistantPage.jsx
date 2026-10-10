@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { ArrowUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import PageHeader from "../components/ui/PageHeader";
+import { SampleBadge } from "../components/widgets/WidgetCard";
 
 const INITIAL_MESSAGES = [
   {
@@ -10,6 +13,11 @@ const INITIAL_MESSAGES = [
 export default function AIAssistantPage() {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [draft, setDraft] = useState("");
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
   const handleSend = (event) => {
     event.preventDefault();
@@ -28,26 +36,25 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">AI Assistant</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-          Grounded RAG chat over the resources you've uploaded.
-        </p>
-      </div>
+    <div className="flex h-[calc(100vh-8rem)] flex-col gap-6">
+      <PageHeader
+        title="AI Assistant"
+        description="Chat grounded in the resources uploaded to your courses."
+        actions={<SampleBadge />}
+      />
 
-      <div className="mt-4 flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <div className="flex-1 space-y-4 overflow-y-auto p-5">
+      <div className="card flex flex-1 flex-col overflow-hidden">
+        <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
           {messages.map((message, index) => (
             <div
               key={index}
               className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-lg rounded-2xl px-4 py-2.5 text-sm ${
+                className={`max-w-lg rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                   message.role === "user"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-200"
+                    ? "rounded-br-md bg-indigo-600 text-white"
+                    : "rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200"
                 }`}
               >
                 {message.text}
@@ -56,20 +63,24 @@ export default function AIAssistantPage() {
           ))}
         </div>
 
-        <form onSubmit={handleSend} className="flex gap-2 border-t border-gray-200 p-3 dark:border-slate-700">
-          <input
-            type="text"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Ask about a concept, resource, or PYQ…"
-            className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          />
-          <button
-            type="submit"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-          >
-            Send
-          </button>
+        <form onSubmit={handleSend} className="border-t border-slate-100 p-3 dark:border-slate-800">
+          <div className="relative">
+            <input
+              type="text"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Ask about a concept, resource, or PYQ…"
+              className="input py-2.5 pr-12"
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim()}
+              className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-indigo-600 text-white transition-colors hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+              aria-label="Send"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </button>
+          </div>
         </form>
       </div>
     </div>

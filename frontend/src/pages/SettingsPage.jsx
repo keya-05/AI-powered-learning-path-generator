@@ -1,4 +1,6 @@
+import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "../components/ui/PageHeader";
 import WidgetCard from "../components/widgets/WidgetCard";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -14,45 +16,42 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
-          Settings & Profile
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-          Manage your account and appearance preferences.
-        </p>
-      </div>
+    <div className="max-w-2xl space-y-8">
+      <PageHeader title="Settings" description="Manage your account and appearance preferences." />
 
       <WidgetCard title="Profile">
-        <dl className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-slate-400">Email</dt>
-            <dd className="font-medium text-gray-800 dark:text-slate-200">{user?.email}</dd>
+        <dl className="-my-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
+          <div className="flex justify-between py-3">
+            <dt className="muted">Email</dt>
+            <dd className="font-medium text-slate-800 dark:text-slate-200">{user?.email}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-slate-400">Role</dt>
-            <dd className="font-medium capitalize text-gray-800 dark:text-slate-200">
-              {user?.role}
-            </dd>
+          <div className="flex justify-between py-3">
+            <dt className="muted">Role</dt>
+            <dd className="font-medium capitalize text-slate-800 dark:text-slate-200">{user?.role}</dd>
           </div>
         </dl>
       </WidgetCard>
 
       <WidgetCard title="Appearance">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-slate-200">Dark mode</p>
-            <p className="text-xs text-gray-500 dark:text-slate-400">
-              Switch between light and dark themes.
-            </p>
+            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Dark mode</p>
+            <p className="muted text-xs">Switch between light and dark themes.</p>
           </div>
           <button
             type="button"
+            role="switch"
+            aria-checked={theme === "dark"}
             onClick={toggleTheme}
-            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className={`relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors ${
+              theme === "dark" ? "bg-indigo-600" : "bg-slate-200"
+            }`}
           >
-            {theme === "dark" ? "Switch to light" : "Switch to dark"}
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                theme === "dark" ? "translate-x-[22px]" : "translate-x-0.5"
+              }`}
+            />
           </button>
         </div>
       </WidgetCard>
@@ -61,8 +60,9 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={handleLogout}
-          className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
+          className="btn border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
         >
+          <LogOut className="h-4 w-4" strokeWidth={1.75} />
           Log out
         </button>
       </WidgetCard>

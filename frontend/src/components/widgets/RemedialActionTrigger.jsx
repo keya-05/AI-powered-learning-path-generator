@@ -1,7 +1,8 @@
+import { Check, FilePlus2, ListChecks } from "lucide-react";
 import { useState } from "react";
 import WidgetCard from "./WidgetCard";
 
-export default function RemedialActionTrigger() {
+export default function RemedialActionTrigger({ strugglingCount }) {
   const [triggered, setTriggered] = useState(null);
 
   const handleTrigger = (action) => {
@@ -12,30 +13,26 @@ export default function RemedialActionTrigger() {
   return (
     <WidgetCard
       title="Remedial Actions"
-      subtitle="Target the students flagged as struggling above"
+      subtitle={`Target the ${strugglingCount} student${strugglingCount === 1 ? "" : "s"} below the gap threshold`}
+      sample
     >
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={() => handleTrigger("quiz")}
-          className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          ⚡ Auto-generate targeted practice quiz
+      <div className="flex flex-col gap-2.5">
+        <button type="button" onClick={() => handleTrigger("quiz")} className="btn-primary w-full">
+          <ListChecks className="h-4 w-4" strokeWidth={1.75} />
+          Generate targeted practice quiz
         </button>
-        <button
-          type="button"
-          onClick={() => handleTrigger("material")}
-          className="flex-1 rounded-lg border border-indigo-200 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 dark:border-indigo-500/40 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
-        >
-          📤 Push supplemental material
+        <button type="button" onClick={() => handleTrigger("material")} className="btn-secondary w-full">
+          <FilePlus2 className="h-4 w-4" strokeWidth={1.75} />
+          Push supplemental material
         </button>
       </div>
 
       {triggered && (
-        <p className="mt-3 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <Check className="h-3.5 w-3.5" />
           {triggered === "quiz"
-            ? "Practice quiz queued for struggling students."
-            : "Supplemental material queued for delivery."}
+            ? "Practice quiz queued (demo only)."
+            : "Supplemental material queued (demo only)."}
         </p>
       )}
     </WidgetCard>

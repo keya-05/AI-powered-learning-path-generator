@@ -1,95 +1,73 @@
 import { useMemo } from "react";
-import ReactFlow, { Background, Controls, MarkerType } from "reactflow";
+import ReactFlow, { Background, Controls } from "reactflow";
+import { useChartTheme } from "../../lib/chartTheme";
+import { buildUnitGraph } from "../../lib/conceptGraph";
+import { MASTERY_HEX, strugglingLevel } from "../../lib/mastery";
+import { EmptyState } from "../ui/States";
+import { GraphLegend } from "./ConceptGraphWidget";
 import WidgetCard from "./WidgetCard";
 
-const RAW_NODES = [
-  { id: "arrays", label: "Arrays", strugglingPct: 8, x: 0, y: 0 },
-  { id: "linked-lists", label: "Linked Lists", strugglingPct: 18, x: 200, y: 0 },
-  { id: "stacks-queues", label: "Stacks & Queues", strugglingPct: 22, x: 400, y: 0 },
-  { id: "hashing", label: "Hashing", strugglingPct: 15, x: 0, y: 120 },
-  { id: "binary-trees", label: "Binary Trees", strugglingPct: 48, x: 400, y: 140 },
-  { id: "avl-trees", label: "AVL Tree Rotations", strugglingPct: 65, x: 620, y: 140 },
-  { id: "heaps", label: "Heaps", strugglingPct: 37, x: 400, y: 260 },
-  { id: "graphs", label: "Graphs", strugglingPct: 54, x: 620, y: 260 },
+const LEGEND = [
+  { label: "Under 25% struggling", color: MASTERY_HEX.high },
+  { label: "25–50%", color: MASTERY_HEX.mid },
+  { label: "Over 50%", color: MASTERY_HEX.low },
+  { label: "Not assessed", color: MASTERY_HEX.none },
 ];
 
-const RAW_EDGES = [
-  ["arrays", "linked-lists"],
-  ["linked-lists", "stacks-queues"],
-  ["stacks-queues", "binary-trees"],
-  ["binary-trees", "avl-trees"],
-  ["binary-trees", "heaps"],
-  ["hashing", "graphs"],
-  ["avl-trees", "graphs"],
-];
+export default function AggregateHeatmapGraph({ concepts, interactive = false, height = 320 }) {
+  const { dark, grid } = useChartTheme();
 
-function heatColor(pct) {
-  if (pct >= 55) return { background: "#fee2e2", border: "#ef4444", color: "#991b1b" };
-  if (pct >= 30) return { background: "#ffedd5", border: "#f59e0b", color: "#9a3412" };
-  return { background: "#dcfce7", border: "#22c55e", color: "#166534" };
-}
-
-function buildElements() {
-  const nodes = RAW_NODES.map((node) => {
-    const palette = heatColor(node.strugglingPct);
-    return {
-      id: node.id,
-      position: { x: node.x, y: node.y },
-      data: { label: `${node.label}\n${node.strugglingPct}% struggling` },
-      style: {
-        background: palette.background,
-        border: `1.5px solid ${palette.border}`,
-        color: palette.color,
-        borderRadius: 10,
-        padding: "6px 10px",
-        fontSize: 11,
-        fontWeight: 600,
-        width: 160,
-        whiteSpace: "pre-line",
-        textAlign: "center",
-      },
-    };
-  });
-
-  const edges = RAW_EDGES.map(([source, target]) => ({
-    id: `${source}-${target}`,
-    source,
-    target,
-    style: { stroke: "#cbd5e1" },
-    markerEnd: { type: MarkerType.ArrowClosed, color: "#cbd5e1" },
-  }));
-
-  return { nodes, edges };
-}
-
-export default function AggregateHeatmapGraph({ interactive = false, height = 300 }) {
-  const { nodes, edges } = useMemo(buildElements, []);
+  const { nodes, edges } = useMemo(
+    () =>
+      buildUnitGraph(concepts, {
+        dark,
+        levelOf: (concept) =>
+          concept.students_assessed === 0 ? "none" : strugglingLevel(concept.struggling_pct),
+        labelOf: (concept) =>
+          concept.students_assessed === 0
+            ? `${concept.title}\nNot assessed`
+            : `${concept.title}\n${Math.round(concept.struggling_pct * 100)}% struggling`,
+      }),
+    [concepts, dark]
+  );
 
   return (
     <WidgetCard
-      title="Master Knowledge Graph — Class Failure Points"
-      subtitle="Curriculum-wide overlay of where students struggle most"
-      sample
+      title="Class Failure Points"
+      subtitle="Share of students below 60% mastery on each concept, by unit"
+      action={<GraphLegend items={LEGEND} />}
     >
-      <div
-        style={{ height }}
-        className="overflow-hidden rounded-lg border border-gray-100 dark:border-slate-800"
-      >
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          fitView
-          nodesDraggable={interactive}
-          nodesConnectable={false}
-          elementsSelectable={interactive}
-          zoomOnScroll={interactive}
-          panOnDrag={interactive}
-          proOptions={{ hideAttribution: true }}
+      {concepts.length === 0 ? (
+        <EmptyState
+          title="No concepts yet"
+          description="Concepts appear here once a syllabus has been uploaded and processed."
+        />
+      ) : (
+        <div
+          style={{ height }}
+          className="concept-graph overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800"
         >
-          <Background gap={16} size={1} color="#e2e8f0" />
-          {interactive && <Controls showInteractive={false} />}
-        </ReactFlow>
-      </div>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            fitView
+            fitViewOptions={{ padding: 0.15 }}
+            nodesDraggable={interactive}
+            nodesConnectable={false}
+            elementsSelectable={interactive}
+            zoomOnScroll={interactive}
+            panOnDrag={interactive}
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background gap={18} size={1} color={grid} />
+            {interactive && <Controls showInteractive={false} />}
+          </ReactFlow>
+        </div>
+      )}
+      <p className="muted mt-3 text-xs">
+        Prerequisite links between concepts come from the knowledge graph (Neo4j), which isn't
+        connected yet.
+      </p>
     </WidgetCard>
   );
 }

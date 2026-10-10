@@ -1,24 +1,28 @@
+export function SampleBadge() {
+  return (
+    <span
+      className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+      title="Not connected to a live data source yet"
+    >
+      Sample
+    </span>
+  );
+}
+
 export default function WidgetCard({ title, subtitle, sample, action, children, className = "" }) {
   return (
-    <section
-      className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${className}`}
-    >
-      {(title || action) && (
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
+    <section className={`card p-5 sm:p-6 ${className}`}>
+      {(title || action || sample) && (
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
             {title && (
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-slate-100">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {title}
-                {sample && (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
-                    Sample data
-                  </span>
-                )}
+                {sample && <SampleBadge />}
               </h3>
             )}
-            {subtitle && (
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">{subtitle}</p>
-            )}
+            {!title && sample && <SampleBadge />}
+            {subtitle && <p className="muted mt-1 text-xs">{subtitle}</p>}
           </div>
           {action}
         </div>

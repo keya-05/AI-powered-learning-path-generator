@@ -1,4 +1,6 @@
+import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
+import PageHeader from "../components/ui/PageHeader";
 import WidgetCard from "../components/widgets/WidgetCard";
 
 const SAMPLE_QUESTIONS = [
@@ -9,46 +11,40 @@ const SAMPLE_QUESTIONS = [
 ];
 
 const DIFFICULTY_TONE = {
-  Easy: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-  Medium: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-  Hard: "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
+  Easy: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  Hard: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
 };
 
 export default function QuestionBankPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
-            Question Bank & Exam Material
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-            Browse previously indexed PYQs and notes, extracted and tagged automatically.
-          </p>
-        </div>
-        <Link
-          to="/content"
-          className="whitespace-nowrap rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          + Upload exam material
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Question Bank"
+        description="Questions extracted and tagged automatically from indexed PYQs and notes."
+        actions={
+          <Link to="/content" className="btn-primary">
+            <Plus className="h-4 w-4" />
+            Upload exam material
+          </Link>
+        }
+      />
 
-      <WidgetCard sample>
-        <ul className="divide-y divide-gray-100 dark:divide-slate-800">
+      <WidgetCard
+        title="Extracted questions"
+        subtitle="Question extraction runs on the vector pipeline, which isn't connected yet"
+        sample
+      >
+        <ul className="-my-4 divide-y divide-slate-100 dark:divide-slate-800">
           {SAMPLE_QUESTIONS.map((item) => (
-            <li key={item.question} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <li key={item.question} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
               <div>
-                <p className="text-sm font-medium text-gray-800 dark:text-slate-200">{item.question}</p>
-                <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.question}</p>
+                <p className="muted mt-1 text-xs">
                   {item.topic} · {item.source}
                 </p>
               </div>
-              <span
-                className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${DIFFICULTY_TONE[item.difficulty]}`}
-              >
-                {item.difficulty}
-              </span>
+              <span className={`badge flex-none ${DIFFICULTY_TONE[item.difficulty]}`}>{item.difficulty}</span>
             </li>
           ))}
         </ul>

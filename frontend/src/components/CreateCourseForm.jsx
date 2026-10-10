@@ -25,13 +25,11 @@ export default function CreateCourseForm({ onCreate, onCancel }) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-    >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="course-title" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
+    <form onSubmit={handleSubmit} className="card mb-6 p-5 sm:p-6">
+      <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">New course</h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <label htmlFor="course-title" className="label">
             Title
           </label>
           <input
@@ -40,12 +38,12 @@ export default function CreateCourseForm({ onCreate, onCancel }) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Data Structures & Algorithms"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="input"
           />
         </div>
 
         <div>
-          <label htmlFor="course-code" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
+          <label htmlFor="course-code" className="label">
             Course code
           </label>
           <input
@@ -54,39 +52,31 @@ export default function CreateCourseForm({ onCreate, onCancel }) {
             value={code}
             onChange={(event) => setCode(event.target.value)}
             placeholder="CS201"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="input"
           />
         </div>
       </div>
 
       <div className="mt-4">
-        <label htmlFor="course-description" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
-          Description (optional)
+        <label htmlFor="course-description" className="label">
+          Description <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <textarea
           id="course-description"
           rows={2}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="input"
         />
       </div>
 
-      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
-      <div className="mt-4 flex gap-3">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+      <div className="mt-5 flex gap-2">
+        <button type="submit" disabled={isSubmitting} className="btn-primary">
           {isSubmitting ? "Creating…" : "Create course"}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
+        <button type="button" onClick={onCancel} className="btn-secondary">
           Cancel
         </button>
       </div>

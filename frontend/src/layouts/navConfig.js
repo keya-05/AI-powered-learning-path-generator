@@ -1,20 +1,33 @@
+import {
+  BookOpen,
+  ClipboardCheck,
+  FileQuestion,
+  FolderOpen,
+  LayoutDashboard,
+  Map,
+  MessageSquare,
+  Network,
+  Settings,
+  TrendingDown,
+} from "lucide-react";
+
 export const STUDENT_NAV_ITEMS = [
-  { to: "/", label: "Dashboard", icon: "📊", end: true },
-  { to: "/courses", label: "My Courses & Workspaces", icon: "📚" },
-  { to: "/learning-path", label: "Personalized Learning Path", icon: "🗺️" },
-  { to: "/assessments", label: "Assessments & Adaptive Tests", icon: "📝" },
-  { to: "/assistant", label: "AI Assistant", icon: "🤖" },
-  { to: "/settings", label: "Settings & Profile", icon: "⚙️" },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/courses", label: "My Courses", icon: BookOpen },
+  { to: "/learning-path", label: "Learning Path", icon: Map },
+  { to: "/assessments", label: "Assessments", icon: ClipboardCheck },
+  { to: "/assistant", label: "AI Assistant", icon: MessageSquare },
 ];
 
 export const INSTRUCTOR_NAV_ITEMS = [
-  { to: "/", label: "Class Overview & Analytics", icon: "📊", end: true },
-  { to: "/content", label: "Course Content & Syllabus Manager", icon: "📖" },
-  { to: "/knowledge-graph", label: "Master Knowledge Graph", icon: "🕸️" },
-  { to: "/gap-insights", label: "Student Knowledge Gap Insights", icon: "📉" },
-  { to: "/question-bank", label: "Question Bank & Exam Material", icon: "📑" },
-  { to: "/settings", label: "Settings", icon: "⚙️" },
+  { to: "/", label: "Class Overview", icon: LayoutDashboard, end: true },
+  { to: "/content", label: "Course Content", icon: FolderOpen },
+  { to: "/knowledge-graph", label: "Knowledge Graph", icon: Network },
+  { to: "/gap-insights", label: "Gap Insights", icon: TrendingDown },
+  { to: "/question-bank", label: "Question Bank", icon: FileQuestion },
 ];
+
+export const SETTINGS_NAV_ITEM = { to: "/settings", label: "Settings", icon: Settings };
 
 export function getNavItems(role) {
   return role === "instructor" ? INSTRUCTOR_NAV_ITEMS : STUDENT_NAV_ITEMS;

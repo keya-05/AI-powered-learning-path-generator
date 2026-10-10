@@ -8,7 +8,7 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <Sidebar
         collapsed={collapsed}
         mobileOpen={mobileOpen}
@@ -21,8 +21,8 @@ export default function AppLayout() {
           onOpenMobileSidebar={() => setMobileOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
+        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+          <div className="mx-auto max-w-6xl">
             <Outlet />
           </div>
         </main>

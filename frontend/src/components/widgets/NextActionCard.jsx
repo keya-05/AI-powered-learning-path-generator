@@ -1,23 +1,44 @@
-export default function NextActionCard({
-  title = "Prerequisite Alert",
-  message = "Revisit Binary Trees before starting AVL Trees — your mastery score is below the 60% threshold.",
-  actionLabel = "Start revision",
-}) {
-  return (
-    <div className="flex flex-col justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 sm:flex-row sm:items-center">
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">⚠️</span>
+import { ArrowRight, Sparkles, TriangleAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import { formatPercent } from "../../lib/mastery";
+
+export default function NextActionCard({ concept }) {
+  if (!concept) {
+    return (
+      <div className="card flex items-start gap-3 p-5">
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+          <Sparkles className="h-[18px] w-[18px]" strokeWidth={1.75} />
+        </span>
         <div>
-          <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">{title}</p>
-          <p className="mt-1 text-sm text-amber-800/90 dark:text-amber-200/80">{message}</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">No open gaps</p>
+          <p className="muted mt-0.5 text-sm">
+            Every concept you've been assessed on is above the 60% mastery threshold.
+          </p>
         </div>
       </div>
-      <button
-        type="button"
-        className="whitespace-nowrap rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
-      >
-        {actionLabel}
-      </button>
+    );
+  }
+
+  return (
+    <div className="card flex flex-col justify-between gap-4 border-amber-200 bg-amber-50/60 p-5 dark:border-amber-500/20 dark:bg-amber-500/5 sm:flex-row sm:items-center">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
+          <TriangleAlert className="h-[18px] w-[18px]" strokeWidth={1.75} />
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            Focus next: {concept.title}
+          </p>
+          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+            Your mastery is {formatPercent(concept.mastery)} in {concept.course_code}, Unit{" "}
+            {concept.unit_number} — your weakest concept right now.
+          </p>
+        </div>
+      </div>
+      <Link to="/learning-path" className="btn-primary whitespace-nowrap">
+        View learning path
+        <ArrowRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }

@@ -56,6 +56,21 @@ async def upload_resource(
     return resource
 
 
+@router.get("/{course_id}/resources", response_model=list[ResourceResponse])
+def list_resources(
+    course_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("instructor")),
+) -> list[ResourceResponse]:
+    get_owned_course_or_404(db, course_id, current_user.id)
+    return (
+        db.query(Resource)
+        .filter(Resource.course_id == course_id)
+        .order_by(Resource.created_at.desc())
+        .all()
+    )
+
+
 def _run_ingestion(resource_id: uuid.UUID) -> None:
     from app.db.postgres import SessionLocal
 

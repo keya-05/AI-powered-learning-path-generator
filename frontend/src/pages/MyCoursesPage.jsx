@@ -1,5 +1,6 @@
 import BrowseCourses from "../components/BrowseCourses";
 import CourseDashboard from "../components/CourseDashboard";
+import PageHeader from "../components/ui/PageHeader";
 import { useAvailableCourses } from "../hooks/useAvailableCourses";
 import { useCourses } from "../hooks/useCourses";
 
@@ -14,14 +15,10 @@ export default function MyCoursesPage() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
-          My Courses & Workspaces
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-          Track mastery across your enrolled courses and discover new ones.
-        </p>
-      </div>
+      <PageHeader
+        title="My Courses"
+        description="Track mastery across your enrolled courses and discover new ones."
+      />
 
       <CourseDashboard
         variant="student"

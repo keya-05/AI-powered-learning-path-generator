@@ -45,6 +45,25 @@ export async function uploadResource(courseId, file, resourceType) {
   return data;
 }
 
+export async function fetchCourseResources(courseId) {
+  const { data } = await apiClient.get(`/courses/${courseId}/resources`);
+  return data;
+}
+
+export async function fetchInstructorOverview(courseId) {
+  const { data } = await apiClient.get("/analytics/instructor", {
+    params: courseId ? { course_id: courseId } : {},
+  });
+  return data;
+}
+
+export async function fetchStudentOverview(courseId) {
+  const { data } = await apiClient.get("/analytics/student", {
+    params: courseId ? { course_id: courseId } : {},
+  });
+  return data;
+}
+
 export async function login(email, password) {
   const { data } = await apiClient.post("/auth/login", { email, password });
   return data;
