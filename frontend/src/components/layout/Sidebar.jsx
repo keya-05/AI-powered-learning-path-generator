@@ -12,24 +12,28 @@ function NavItem({ item, collapsed, onNavigate }) {
       end={item.end}
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
+      aria-label={collapsed ? item.label : undefined}
       className={({ isActive }) =>
-        `group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-          collapsed ? "justify-center" : ""
+        `group flex min-h-[44px] items-center gap-3 rounded-2xl p-1.5 pr-3 text-sm font-semibold transition duration-150 ${
+          collapsed ? "justify-center pr-1.5" : ""
         } ${
           isActive
-            ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-            : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
+            ? "bg-indigo-900 text-white dark:bg-indigo-300 dark:text-indigo-950"
+            : "text-slate-700 hover:bg-raised hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
         }`
       }
     >
       {({ isActive }) => (
         <>
-          <Icon
-            className={`h-[18px] w-[18px] flex-none ${
-              isActive ? "text-indigo-600 dark:text-indigo-400" : ""
+          <span
+            className={`flex h-8 w-8 flex-none items-center justify-center rounded-xl transition ${
+              isActive
+                ? "bg-white/15 dark:bg-indigo-950/10"
+                : "bg-raised text-duo shadow-tile group-hover:-translate-y-px dark:shadow-none"
             }`}
-            strokeWidth={1.75}
-          />
+          >
+            <Icon className="h-[17px] w-[17px]" strokeWidth={2} />
+          </span>
           {!collapsed && <span className="truncate">{item.label}</span>}
         </>
       )}
@@ -40,22 +44,21 @@ function NavItem({ item, collapsed, onNavigate }) {
 function SidebarContent({ collapsed, onNavigate, onClose }) {
   const { user } = useAuth();
   const navItems = getNavItems(user?.role);
+  const isInstructor = user?.role === "instructor";
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-slate-900">
-      <div
-        className={`flex h-16 flex-none items-center gap-2.5 px-4 ${collapsed ? "justify-center" : ""}`}
-      >
-        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-indigo-600 text-white">
-          <GraduationCap className="h-[18px] w-[18px]" strokeWidth={2} />
+    <div className="flex h-full flex-col rounded-panel bg-panel shadow-card dark:shadow-none">
+      <div className={`flex flex-none items-center gap-3 px-4 pb-2 pt-5 ${collapsed ? "justify-center px-2" : ""}`}>
+        <span className="flex h-10 w-10 flex-none items-center justify-center rounded-2xl bg-indigo-900 text-white dark:bg-indigo-300 dark:text-indigo-950">
+          <GraduationCap className="h-5 w-5" strokeWidth={2} />
         </span>
         {!collapsed && (
           <span className="min-w-0 flex-1 leading-tight">
-            <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">
+            <span className="block truncate font-display text-[15px] font-bold tracking-tight text-slate-950 dark:text-white">
               Learning Path
             </span>
-            <span className="block truncate text-xs text-slate-400">
-              {user?.role === "instructor" ? "Instructor workspace" : "Student workspace"}
+            <span className="block truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+              {isInstructor ? "Instructor workspace" : "Student workspace"}
             </span>
           </span>
         )}
@@ -66,9 +69,9 @@ function SidebarContent({ collapsed, onNavigate, onClose }) {
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {!collapsed && <p className="eyebrow mb-2 px-3">Menu</p>}
-        <ul className="space-y-0.5">
+      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-5">
+        {!collapsed && <p className="eyebrow mb-3 px-2">Menu</p>}
+        <ul className="space-y-1">
           {navItems.map((item) => (
             <li key={item.to}>
               <NavItem item={item} collapsed={collapsed} onNavigate={onNavigate} />
@@ -77,20 +80,22 @@ function SidebarContent({ collapsed, onNavigate, onClose }) {
         </ul>
       </nav>
 
-      <div className="space-y-1 border-t border-slate-100 p-3 dark:border-slate-800">
+      <div className="space-y-2 p-3">
         <NavItem item={SETTINGS_NAV_ITEM} collapsed={collapsed} onNavigate={onNavigate} />
         <div
-          className={`flex items-center gap-3 rounded-lg px-2 py-2 ${collapsed ? "justify-center" : ""}`}
+          className={`flex items-center gap-3 rounded-2xl bg-raised p-2 ${collapsed ? "justify-center" : ""}`}
         >
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-indigo-50 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+          <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-pop font-display text-xs font-bold text-slate-950">
             {user?.email?.[0]?.toUpperCase() ?? "?"}
           </span>
           {!collapsed && (
             <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+              <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {user?.email}
               </span>
-              <span className="block truncate text-xs capitalize text-slate-400">{user?.role}</span>
+              <span className="block truncate text-xs font-medium capitalize text-slate-500 dark:text-slate-400">
+                {user?.role}
+              </span>
             </span>
           )}
         </div>
@@ -103,8 +108,8 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
   return (
     <>
       <aside
-        className={`hidden shrink-0 border-r border-slate-200/80 transition-[width] duration-200 dark:border-slate-800 md:block ${
-          collapsed ? "w-[72px]" : "w-60"
+        className={`hidden shrink-0 p-3 pr-0 transition-[width] duration-200 md:block ${
+          collapsed ? "w-[88px]" : "w-64"
         }`}
       >
         <SidebarContent collapsed={collapsed} />
@@ -113,11 +118,11 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
             onClick={onCloseMobile}
             aria-hidden="true"
           />
-          <div className="absolute inset-y-0 left-0 w-64 shadow-xl">
+          <div className="absolute inset-y-0 left-0 w-72 p-3">
             <SidebarContent collapsed={false} onNavigate={onCloseMobile} onClose={onCloseMobile} />
           </div>
         </div>

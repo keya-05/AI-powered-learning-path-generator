@@ -5,7 +5,7 @@ export default function CourseSelect({ courses, value, onChange, includeAll = fa
     <select
       value={value ?? ""}
       onChange={(event) => onChange(event.target.value || null)}
-      className="input w-auto min-w-[14rem] py-1.5"
+      className="input w-auto min-w-[14rem] cursor-pointer rounded-full py-2 pl-4 font-semibold"
       aria-label="Select course"
     >
       {includeAll && <option value="">All courses</option>}

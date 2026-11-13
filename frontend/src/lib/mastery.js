@@ -26,10 +26,10 @@ export function formatPercent(score) {
 }
 
 export const MASTERY_TEXT = {
-  low: "text-rose-600 dark:text-rose-400",
-  mid: "text-amber-600 dark:text-amber-400",
-  high: "text-emerald-600 dark:text-emerald-400",
-  none: "text-slate-400 dark:text-slate-500",
+  low: "text-rose-700 dark:text-rose-400",
+  mid: "text-amber-700 dark:text-amber-400",
+  high: "text-emerald-700 dark:text-emerald-400",
+  none: "text-slate-500 dark:text-slate-400",
 };
 
 export const MASTERY_BG = {

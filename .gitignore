@@ -38,3 +38,5 @@ Thumbs.db
 # --- Misc ---
 *.tsbuildinfo
 coverage/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

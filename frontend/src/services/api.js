@@ -64,6 +64,15 @@ export async function fetchStudentOverview(courseId) {
   return data;
 }
 
+export async function askAssistant({ message, history, courseId }) {
+  const { data } = await apiClient.post("/assistant/chat", {
+    message,
+    history,
+    course_id: courseId || null,
+  });
+  return data;
+}
+
 export async function login(email, password) {
   const { data } = await apiClient.post("/auth/login", { email, password });
   return data;

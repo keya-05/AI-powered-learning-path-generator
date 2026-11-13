@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     storage_root: str = "./uploaded_resources"
     max_upload_size_mb: int = 25
 
+    # AI assistant. The key is read from backend/.env; when it's empty the SDK
+    # falls back to its own credential chain (env var, `ant auth login` profile).
+    anthropic_api_key: str | None = None
+    assistant_model: str = "claude-opus-5-5"
+
     @property
     def max_upload_size_bytes(self) -> int:
         return self.max_upload_size_mb * 1024 * 1024

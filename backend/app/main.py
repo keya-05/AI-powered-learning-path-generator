@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analytics, auth, courses, resources
+from app.api import analytics, assistant, auth, courses, resources
 from app.db.base import Base
 from app.db.postgres import engine
 
@@ -19,6 +19,7 @@ app.include_router(auth.router)
 app.include_router(courses.router)
 app.include_router(resources.router)
 app.include_router(analytics.router)
+app.include_router(assistant.router)
 
 
 @app.on_event("startup")

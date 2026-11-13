@@ -10,13 +10,13 @@ export default function MasteryBar({ score, label, showValue = true, size = "md"
         <div className="mb-1.5 flex justify-between text-xs">
           <span className="muted">{label}</span>
           {showValue && (
-            <span className={`font-medium tabular-nums ${MASTERY_TEXT[level]}`}>
+            <span className={`font-semibold tabular-nums ${MASTERY_TEXT[level]}`}>
               {formatPercent(score)}
             </span>
           )}
         </div>
       )}
-      <div className={`${height} w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800`}>
+      <div className={`${height} w-full overflow-hidden rounded-full bg-slate-900/10 dark:bg-white/10`}>
         <div
           className={`${height} rounded-full ${MASTERY_BG[level]} transition-all`}
           style={{ width: `${toPercent(score) ?? 0}%` }}
