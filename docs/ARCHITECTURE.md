@@ -41,7 +41,7 @@ Group BCC06 · Week 3 Sprint · Task 3.1
 │  └───────────────────┬─────────────────────────┘   │               │  └───────────────────┬────────────────────────┘   │
 │                       ▼                             │               │                      ▼                            │
 │  ┌───────────────────────────────────────────┐     │               │  ┌────────────────────────────────────────────┐   │
-│  │ Embedding Model (e.g. bge-small / OpenAI)  │     │               │  │ Neo4j Writer                                │   │
+│  │ Embedding Model (e.g. bge-small / OpenAI)  │     │               │  │ Graph Writer (PostgreSQL tables)            │   │
 │  └───────────────────┬─────────────────────────┘    │               │  │  MERGE (:Course)-[:HAS_UNIT]->(:Unit)       │   │
 │                       ▼                             │               │  │  MERGE (:Unit)-[:CONTAINS]->(:Concept)      │   │
 │  ┌───────────────────────────────────────────┐     │               │  │  MERGE (:Concept)-[:EXTRACTED_FROM]->        │   │
@@ -83,10 +83,10 @@ Group BCC06 · Week 3 Sprint · Task 3.1
 | Extractor | `TextMetadataExtractor` | Normalizes into `ExtractedDocument{ course_id, resource_id, blocks[] }` |
 
 ### 2.2 Dual Graph-Vector Indexing
-Both branches consume the **same** `ExtractedDocument` and share a deterministic `chunk_id` (UUID derived from `resource_id + block_offset`) as the join key between Postgres/Vector metadata and Neo4j `:ResourceChunk` nodes — this is what makes hybrid retrieval possible later (Task 3.3).
+Both branches consume the **same** `ExtractedDocument` and share a deterministic `chunk_id` (UUID derived from `resource_id + block_offset`) as the join key between the vector index and the graph tables in Postgres.
 
 - **Vector branch**: hierarchical chunking → embedding → Chroma/FAISS upsert, metadata-filterable by `course_id`, `unit_id`, `resource_type`.
-- **Graph branch**: LLM-assisted concept extraction → Neo4j MERGE of `Concept`, `Unit`, `ResourceChunk` nodes and `REQUIRES_PREREQUISITE` edges (derived from syllabus ordering + co-occurrence + explicit "prerequisite" language in source text).
+- **Graph branch**: LLM-assisted concept extraction → PostgreSQL rows for units, concepts, concept-passage links and prerequisite edges (derived from syllabus ordering + co-occurrence + explicit "prerequisite" language in source text).
 
 ### 2.3 Engine Core
 1. **Diagnostic Assessment** — adaptive quiz seeded from `concepts` per unit; results written to `student_knowledge_profiles.mastery_score`.

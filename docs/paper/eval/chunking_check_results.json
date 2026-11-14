@@ -1,0 +1,93 @@
+{
+  "encoder_max_content_pieces": 254,
+  "documents": {
+    "da7e096b1ee24882a17b41c81dff57ea_Amdahl_Law_Notes.pdf": {
+      "pages_with_text": 1,
+      "words": 11,
+      "word_pieces_per_word": 1.818,
+      "before": {
+        "passages": 1,
+        "passages_over_encoder_limit": 0,
+        "share_over_limit": 0.0,
+        "word_pieces_stored": 20,
+        "word_pieces_not_embedded": 0,
+        "share_not_embedded": 0.0,
+        "passages_contained_in_previous": 0
+      },
+      "after": {
+        "passages": 1,
+        "passages_over_encoder_limit": 0,
+        "share_over_limit": 0.0,
+        "word_pieces_stored": 20,
+        "word_pieces_not_embedded": 0,
+        "share_not_embedded": 0.0,
+        "passages_contained_in_previous": 0
+      }
+    },
+    "Personalised_LEarnign.pdf": {
+      "pages_with_text": 9,
+      "words": 7021,
+      "word_pieces_per_word": 1.589,
+      "before": {
+        "passages": 25,
+        "passages_over_encoder_limit": 21,
+        "share_over_limit": 0.84,
+        "word_pieces_stored": 12581,
+        "word_pieces_not_embedded": 6715,
+        "share_not_embedded": 0.5337,
+        "passages_contained_in_previous": 1
+      },
+      "after": {
+        "passages": 59,
+        "passages_over_encoder_limit": 0,
+        "share_over_limit": 0.0,
+        "word_pieces_stored": 14123,
+        "word_pieces_not_embedded": 0,
+        "share_not_embedded": 0.0,
+        "passages_contained_in_previous": 0
+      }
+    }
+  },
+  "synthetic_sweep": {
+    "one_piece_per_word": {
+      "before": {
+        "passages": 2760,
+        "passages_over_encoder_limit": 1818,
+        "share_over_limit": 0.6587,
+        "word_pieces_stored": 808890,
+        "word_pieces_not_embedded": 233673,
+        "share_not_embedded": 0.2889,
+        "passages_contained_in_previous": 180
+      },
+      "after": {
+        "passages": 3990,
+        "passages_over_encoder_limit": 0,
+        "share_over_limit": 0.0,
+        "word_pieces_stored": 888000,
+        "word_pieces_not_embedded": 0,
+        "share_not_embedded": 0.0,
+        "passages_contained_in_previous": 0
+      }
+    },
+    "mixed_pieces_seed0": {
+      "before": {
+        "passages": 2760,
+        "passages_over_encoder_limit": 2129,
+        "share_over_limit": 0.7714,
+        "word_pieces_stored": 1293809,
+        "word_pieces_not_embedded": 672889,
+        "share_not_embedded": 0.5201,
+        "passages_contained_in_previous": 180
+      },
+      "after": {
+        "passages": 6206,
+        "passages_over_encoder_limit": 0,
+        "share_over_limit": 0.0,
+        "word_pieces_stored": 1450323,
+        "word_pieces_not_embedded": 0,
+        "share_not_embedded": 0.0,
+        "passages_contained_in_previous": 0
+      }
+    }
+  }
+}

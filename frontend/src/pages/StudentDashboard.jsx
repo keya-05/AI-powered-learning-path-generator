@@ -218,7 +218,7 @@ export default function StudentDashboard() {
         {course.data ? (
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <ConceptGraphWidget key={courseId} concepts={course.data.concepts} />
+              <ConceptGraphWidget key={courseId} courseId={courseId} concepts={course.data.concepts} />
             </div>
             <MasteryRadarWidget units={course.data.unit_mastery} />
           </div>

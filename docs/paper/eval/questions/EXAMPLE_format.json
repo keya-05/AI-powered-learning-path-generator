@@ -1,0 +1,7 @@
+[
+  {
+    "course_code": "CS201",
+    "question": "Why does an AVL tree need rotations after insertion?",
+    "relevant_contains": ["single or double rotation", "balance factor"]
+  }
+]

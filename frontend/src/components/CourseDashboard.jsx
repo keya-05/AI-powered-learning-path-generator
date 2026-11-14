@@ -16,7 +16,10 @@ function CourseCard({ course, variant, selected, onSelect }) {
           <p className="eyebrow">{course.code}</p>
           <h3 className="mt-1 truncate font-semibold text-slate-900 dark:text-slate-100">{course.title}</h3>
         </div>
-        {hasGaps && (
+        {course.is_personal && (
+          <span className="badge flex-none bg-duo-soft text-duo">Your subject</span>
+        )}
+        {hasGaps && !course.is_personal && (
           <span className="badge flex-none bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
             {course.weak_concept_count} gap{course.weak_concept_count > 1 ? "s" : ""}
           </span>
@@ -105,7 +108,7 @@ export default function CourseDashboard({
         description={
           variant === "instructor"
             ? "Create one to start sharing material with students."
-            : "Browse the available courses below and enroll to get started."
+            : "Enroll in a course below, or add a subject of your own to study from your notes."
         }
       />
     );

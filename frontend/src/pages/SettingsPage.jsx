@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import SchoolCard from "../components/SchoolCard";
 import PageHeader from "../components/ui/PageHeader";
 import WidgetCard from "../components/widgets/WidgetCard";
 import { useAuth } from "../context/AuthContext";
@@ -31,6 +32,8 @@ export default function SettingsPage() {
           </div>
         </dl>
       </WidgetCard>
+
+      <SchoolCard />
 
       <WidgetCard title="Appearance">
         <div className="flex items-center justify-between gap-4">

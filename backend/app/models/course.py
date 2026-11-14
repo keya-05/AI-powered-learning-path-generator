@@ -21,6 +21,12 @@ class Course(Base):
     )
     code: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Teachers share this so students can enrol directly. None for a student's own subject.
+    join_code: Mapped[str | None] = mapped_column(String(12), unique=True, nullable=True)
+    # The school whose students see this course in their catalog.
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -32,3 +38,8 @@ class Course(Base):
     concepts: Mapped[list["Concept"]] = relationship(
         back_populates="course", cascade="all, delete-orphan"
     )
+
+    @property
+    def is_personal(self) -> bool:
+        """A subject a student made for themselves: no instructor, only their own uploads."""
+        return self.owner.role == "student"

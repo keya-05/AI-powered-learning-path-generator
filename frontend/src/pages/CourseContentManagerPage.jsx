@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import CourseDashboard from "../components/CourseDashboard";
+import CourseJoinCode from "../components/CourseJoinCode";
 import ResourceTable from "../components/ResourceTable";
 import ResourceUploader from "../components/ResourceUploader";
 import PageHeader from "../components/ui/PageHeader";
@@ -34,7 +35,10 @@ function useCourseResources(courseId) {
 export default function CourseContentManagerPage() {
   const { courses, isLoading, error, refresh, addCourse } = useCourses();
   const [selectedId, setSelectedId] = useSelectedCourse(courses);
-  const selectedCourse = courses.find((course) => course.id === selectedId);
+  const [codeOverrides, setCodeOverrides] = useState({});
+  const found = courses.find((course) => course.id === selectedId);
+  // A regenerated code shows straight away, without refetching every course.
+  const selectedCourse = found && { ...found, join_code: codeOverrides[found.id] ?? found.join_code };
   const { resources, error: resourcesError, refresh: refreshResources } = useCourseResources(selectedId);
 
   return (
@@ -54,6 +58,13 @@ export default function CourseContentManagerPage() {
         onSelectCourse={(course) => setSelectedId(course.id)}
         selectedCourseId={selectedId}
       />
+
+      {selectedCourse && (
+        <CourseJoinCode
+          course={selectedCourse}
+          onChange={(code) => setCodeOverrides((prev) => ({ ...prev, [selectedCourse.id]: code }))}
+        />
+      )}
 
       {selectedCourse && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">

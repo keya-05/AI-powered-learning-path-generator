@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analytics, assistant, auth, courses, resources
+from app.api import analytics, assessments, assignments, assistant, auth, courses, graph, learning_path, resources
 from app.db.base import Base
 from app.db.postgres import engine
+from app.db.schema_upgrade import upgrade_schema
 
-app = FastAPI(title="AI-Powered Personalized Learning Path Generator", version="0.4.0")
+app = FastAPI(title="AI-Powered Personalized Learning Path Generator", version="0.5.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,11 +21,16 @@ app.include_router(courses.router)
 app.include_router(resources.router)
 app.include_router(analytics.router)
 app.include_router(assistant.router)
+app.include_router(assessments.router)
+app.include_router(assignments.router)
+app.include_router(graph.router)
+app.include_router(learning_path.router)
 
 
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
+    upgrade_schema(engine)
 
 
 @app.get("/health", tags=["health"])

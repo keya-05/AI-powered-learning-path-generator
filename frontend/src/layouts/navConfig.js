@@ -1,8 +1,10 @@
 import {
   BookOpen,
   ClipboardCheck,
+  ClipboardList,
   FileQuestion,
   FolderOpen,
+  Library,
   LayoutDashboard,
   Map,
   MessageSquare,
@@ -14,6 +16,7 @@ import {
 export const STUDENT_NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/courses", label: "My Courses", icon: BookOpen },
+  { to: "/materials", label: "Materials", icon: Library },
   { to: "/learning-path", label: "Learning Path", icon: Map },
   { to: "/assessments", label: "Assessments", icon: ClipboardCheck },
   { to: "/assistant", label: "AI Assistant", icon: MessageSquare },
@@ -22,6 +25,7 @@ export const STUDENT_NAV_ITEMS = [
 export const INSTRUCTOR_NAV_ITEMS = [
   { to: "/", label: "Class Overview", icon: LayoutDashboard, end: true },
   { to: "/content", label: "Course Content", icon: FolderOpen },
+  { to: "/assignments", label: "Assignments", icon: ClipboardList },
   { to: "/knowledge-graph", label: "Knowledge Graph", icon: Network },
   { to: "/gap-insights", label: "Gap Insights", icon: TrendingDown },
   { to: "/question-bank", label: "Question Bank", icon: FileQuestion },

@@ -21,7 +21,6 @@ PBL/
 │       ├── db/
 │       │   ├── base.py                  # SQLAlchemy declarative Base + session dep
 │       │   ├── postgres.py              # Engine/session factory for Postgres
-│       │   ├── neo4j_client.py          # Neo4j driver singleton + session helper
 │       │   └── vector_store.py          # Chroma client factory
 │       ├── models/                      # SQLAlchemy ORM models (1:1 with DATABASE_SCHEMA.sql)
 │       │   ├── user.py
@@ -63,4 +62,4 @@ PBL/
 - **backend/app/api** stays thin — routers only validate input, delegate to `services/`, and shape the response via `schemas/`. Business logic (parsing, chunking, mastery math) never lives in a route handler.
 - **backend/app/models** mirrors `docs/DATABASE_SCHEMA.sql` 1:1 so ORM drift from the DDL is easy to spot in review.
 - **frontend/src/services/api.js** is the single Axios instance; every hook and component goes through it so the JWT interceptor and base URL are configured exactly once.
-- Neo4j and the vector store are accessed only from `backend/app/db/*` and `backend/app/services/ingestion.py` — never directly from route handlers — keeping the dual-index write path (Task 3.1, section 2.2) centralized.
+- The vector store is accessed only from `backend/app/db/*` and `backend/app/services/ingestion.py` — never directly from route handlers — keeping the dual-index write path (Task 3.1, section 2.2) centralized.

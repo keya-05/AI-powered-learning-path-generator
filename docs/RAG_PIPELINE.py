@@ -2,6 +2,12 @@
 AI-Powered Personalized Learning Path Generator — Hybrid RAG Pipeline
 Group BCC06 - Week 3 Sprint - Task 3.3
 
+SUPERSEDED: this Week 3 design sketch assumed a Neo4j graph. The system now
+keeps the curriculum graph in PostgreSQL, and the implemented pipeline is in
+backend/app/services/ingestion.py (chunking), course_graph.py (graph build)
+and retrieval.py (graph + vector retrieval fused by RRF). Kept as a record of
+the original design.
+
 Architectural pseudo-implementation of:
   1. Hierarchical / hybrid document chunking (retains parent unit/topic metadata)
   2. Vector indexing with metadata filtering keys

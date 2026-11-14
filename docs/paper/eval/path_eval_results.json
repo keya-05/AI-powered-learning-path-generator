@@ -1,0 +1,95 @@
+{
+  "worked_example": {
+    "order": [
+      "Linked lists",
+      "Stacks & queues",
+      "Binary trees",
+      "Binary search trees"
+    ],
+    "priority": {
+      "AVL rotations": 0.745,
+      "Binary search trees": 0.69,
+      "Linked lists": 0.56,
+      "Stacks & queues": 0.52,
+      "Binary trees": 0.58
+    },
+    "dependency_share": {
+      "AVL rotations": 0.0,
+      "Binary search trees": 0.25,
+      "Linked lists": 0.75,
+      "Stacks & queues": 0.75,
+      "Binary trees": 0.5
+    },
+    "deferred": [
+      "AVL rotations"
+    ],
+    "extra_hours": 4,
+    "matches_paper": true
+  },
+  "random_profiles": {
+    "trials": 200,
+    "seed": 20261114,
+    "note": "Constructed DAGs and mastery profiles; test inputs, not learner data.",
+    "proposed": {
+      "violation_rate": {
+        "mean": 0.0,
+        "max": 0.0
+      },
+      "mastered_included": {
+        "mean": 0.0,
+        "max": 0.0
+      },
+      "needed_covered": {
+        "mean": 0.6704,
+        "max": 1.0
+      }
+    },
+    "syllabus_order": {
+      "violation_rate": {
+        "mean": 0.3257,
+        "max": 1.0
+      },
+      "mastered_included": {
+        "mean": 0.2783,
+        "max": 1.0
+      },
+      "needed_covered": {
+        "mean": 0.4715,
+        "max": 0.8571
+      }
+    },
+    "budget_exceeded": 0
+  },
+  "timing": [
+    {
+      "needed": 10,
+      "edges": 1,
+      "median_ms": 0.057
+    },
+    {
+      "needed": 25,
+      "edges": 11,
+      "median_ms": 0.136
+    },
+    {
+      "needed": 50,
+      "edges": 50,
+      "median_ms": 0.329
+    },
+    {
+      "needed": 100,
+      "edges": 156,
+      "median_ms": 0.738
+    },
+    {
+      "needed": 200,
+      "edges": 323,
+      "median_ms": 1.753
+    },
+    {
+      "needed": 400,
+      "edges": 690,
+      "median_ms": 4.415
+    }
+  ]
+}

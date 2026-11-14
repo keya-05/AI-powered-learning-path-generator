@@ -189,7 +189,7 @@ export default function InstructorDashboard() {
 
       <div id="gaps" className="grid scroll-mt-6 grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <AggregateHeatmapGraph key={courseId} concepts={data.concepts} />
+          <AggregateHeatmapGraph key={courseId} courseId={courseId} concepts={data.concepts} />
         </div>
         <RemedialActionTrigger strugglingCount={strugglingCount} students={struggling.slice(0, 4)} />
       </div>

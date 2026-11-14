@@ -1,10 +1,11 @@
-// Lays concepts out in one column per syllabus unit. Prerequisite edges live in Neo4j,
-// which the frontend doesn't read yet, so the graph only shows unit structure for now.
+// Lays concepts out in one column per syllabus unit and draws prerequisite links
+// (from the prerequisite to the concept that needs it) from the course graph.
+import { MarkerType, Position } from "reactflow";
 
-const COLUMN_WIDTH = 168;
-const ROW_HEIGHT = 66;
+const COLUMN_WIDTH = 196;
+const ROW_HEIGHT = 74;
 const HEADER_OFFSET = 44;
-const NODE_WIDTH = 148;
+const NODE_WIDTH = 156;
 
 const PALETTES = {
   light: {
@@ -13,6 +14,9 @@ const PALETTES = {
     low: { background: "#fff1f2", border: "#fda4af", color: "#9f1239" },
     none: { background: "#f8fafc", border: "#cbd5e1", color: "#475569" },
     header: "#64748b",
+    edge: "#64748b",
+    edgeMuted: "#cbd5e1",
+    edgeFocus: "#be185d",
   },
   dark: {
     high: { background: "#022c22", border: "#047857", color: "#a7f3d0" },
@@ -20,10 +24,21 @@ const PALETTES = {
     low: { background: "#2a0a12", border: "#be123c", color: "#fecdd3" },
     none: { background: "#0f172a", border: "#334155", color: "#cbd5e1" },
     header: "#94a3b8",
+    edge: "#94a3b8",
+    edgeMuted: "#334155",
+    edgeFocus: "#f472b6",
   },
 };
 
-export function buildUnitGraph(items, { dark, levelOf, labelOf }) {
+/**
+ * items: concepts with concept_id, unit_number and optionally position.
+ * links: [{ id, from, to, kind }] where `from` is the prerequisite; kind is
+ *   "active" (default), "pending" (dashed, e.g. an automatic link awaiting review)
+ *   or "muted" (rejected / removed, drawn faint).
+ * focusId: highlights the links touching that concept.
+ * badgeOf(item): optional short text placed before the label (e.g. a plan step number).
+ */
+export function buildUnitGraph(items, { dark, levelOf, labelOf, links = [], focusId = null, badgeOf = null }) {
   const palette = PALETTES[dark ? "dark" : "light"];
   const units = [...new Set(items.map((item) => item.unit_number))].sort((a, b) => a - b);
 
@@ -50,16 +65,21 @@ export function buildUnitGraph(items, { dark, levelOf, labelOf }) {
 
     items
       .filter((item) => item.unit_number === unit)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
       .forEach((item, row) => {
         const colors = palette[levelOf(item)];
+        const badge = badgeOf ? badgeOf(item) : null;
+        const focused = focusId === item.concept_id;
         nodes.push({
           id: item.concept_id,
           position: { x: column * COLUMN_WIDTH, y: HEADER_OFFSET + row * ROW_HEIGHT },
-          data: { label: labelOf(item) },
+          data: { label: badge ? `${badge}  ${labelOf(item)}` : labelOf(item) },
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
           style: {
             width: NODE_WIDTH,
             background: colors.background,
-            border: `1px solid ${colors.border}`,
+            border: `${focused ? 2 : 1}px solid ${focused ? palette.edgeFocus : colors.border}`,
             color: colors.color,
             borderRadius: 14,
             padding: "8px 10px",
@@ -73,5 +93,28 @@ export function buildUnitGraph(items, { dark, levelOf, labelOf }) {
       });
   });
 
-  return { nodes, edges: [] };
+  const known = new Set(items.map((item) => item.concept_id));
+  const edges = links
+    .filter((link) => known.has(link.from) && known.has(link.to))
+    .map((link) => {
+      const touching = focusId && (link.from === focusId || link.to === focusId);
+      const kind = link.kind ?? "active";
+      const color = touching ? palette.edgeFocus : kind === "muted" ? palette.edgeMuted : palette.edge;
+      return {
+        id: link.id,
+        source: link.from,
+        target: link.to,
+        type: "default",
+        animated: Boolean(touching) && kind === "active",
+        markerEnd: { type: MarkerType.ArrowClosed, color, width: 16, height: 16 },
+        style: {
+          stroke: color,
+          strokeWidth: touching ? 2 : 1.25,
+          strokeDasharray: kind === "pending" ? "5 4" : kind === "muted" ? "2 4" : undefined,
+          opacity: focusId && !touching ? 0.35 : 1,
+        },
+      };
+    });
+
+  return { nodes, edges };
 }

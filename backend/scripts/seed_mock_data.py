@@ -11,15 +11,20 @@ recreated, so the data always matches this file.
 import random
 from datetime import datetime, timedelta, timezone
 
+from app.core.codes import new_join_code
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.postgres import SessionLocal, engine
-from app.models import Concept, Course, Enrollment, Resource, StudentKnowledgeProfile, User
+from app.db.schema_upgrade import upgrade_schema
+from app.models import Concept, Course, Enrollment, Organization, Resource, StudentKnowledgeProfile, User
 
 INSTRUCTOR_EMAIL = "teacher@gmail.com"
 EXISTING_STUDENT_EMAIL = "keya@gmail.com"
 MOCK_STUDENT_DOMAIN = "student.edu"
 MOCK_STUDENT_PASSWORD = "Password123"
+# The demo school: its courses are listed to its own students only.
+ORGANIZATION_NAME = "Demo University"
+ORGANIZATION_CODE = "DEMO26"
 
 # (code, title, description, {unit_number: [(concept, difficulty 0-1), ...]})
 COURSES = [
@@ -58,6 +63,18 @@ COURSES = [
             4: [("File Systems", 0.30)],
         },
     ),
+    (
+        "CS402",
+        "High Performance Computing",
+        "Parallel architectures, shared- and distributed-memory programming, GPU computing and performance analysis.",
+        {
+            1: [("Parallel Architectures & Flynn's Taxonomy", 0.20), ("Amdahl's & Gustafson's Laws", 0.35)],
+            2: [("Shared Memory with OpenMP", 0.40), ("Race Conditions & Synchronization", 0.55)],
+            3: [("Message Passing with MPI", 0.55), ("Collective Communication", 0.60)],
+            4: [("GPU Programming with CUDA", 0.65), ("Memory Coalescing", 0.70)],
+            5: [("Load Balancing", 0.50), ("Performance Profiling & Roofline Model", 0.60)],
+        },
+    ),
 ]
 
 # (file_name, file_type, resource_type, processing_status, days_ago)
@@ -80,24 +97,30 @@ RESOURCES = {
         ("Memory_Management_Notes.docx", "docx", "notes", "indexed", 10),
         ("OS_PYQ_2024.pdf", "pdf", "pyq", "pending", 0),
     ],
+    "CS402": [
+        ("CS402_Syllabus_2026.pdf", "pdf", "syllabus", "indexed", 28),
+        ("OpenMP_and_MPI_Lecture.pptx", "pptx", "ppt", "indexed", 14),
+        ("CUDA_Programming_Notes.pdf", "pdf", "notes", "indexed", 7),
+        ("HPC_PYQ_2024.pdf", "pdf", "pyq", "indexed", 3),
+    ],
 }
 
 # (email local part, ability 0-1, enrolled course codes)
 MOCK_STUDENTS = [
-    ("aarav.sharma", 0.88, ["CS201", "CS301", "CS302"]),
+    ("aarav.sharma", 0.88, ["CS201", "CS301", "CS302", "CS402"]),
     ("ananya.iyer", 0.62, ["CS201", "CS301"]),
     ("rahul.verma", 0.42, ["CS201", "CS302"]),
     ("meera.nair", 0.70, ["CS201", "CS301"]),
-    ("kabir.shah", 0.35, ["CS201", "CS301", "CS302"]),
+    ("kabir.shah", 0.35, ["CS201", "CS301", "CS302", "CS402"]),
     ("diya.patel", 0.78, ["CS301", "CS302"]),
-    ("devansh.rao", 0.50, ["CS201"]),
-    ("isha.kapoor", 0.66, ["CS201", "CS302"]),
+    ("devansh.rao", 0.50, ["CS201", "CS402"]),
+    ("isha.kapoor", 0.66, ["CS201", "CS302", "CS402"]),
     ("arjun.mehta", 0.56, ["CS301"]),
-    ("sneha.reddy", 0.82, ["CS201", "CS302"]),
+    ("sneha.reddy", 0.82, ["CS201", "CS302", "CS402"]),
 ]
 
 EXISTING_STUDENT_ABILITY = 0.60
-EXISTING_STUDENT_COURSES = ["CS201", "CS301"]
+EXISTING_STUDENT_COURSES = ["CS201", "CS301", "CS402"]
 
 
 def _mastery(rng: random.Random, ability: float, difficulty: float) -> float:
@@ -139,6 +162,7 @@ def _enroll_with_profiles(db, rng, student: User, ability: float, codes: list[st
 
 def seed() -> None:
     Base.metadata.create_all(bind=engine)
+    upgrade_schema(engine)
     rng = random.Random(42)
     now = datetime.now(timezone.utc)
 
@@ -152,6 +176,13 @@ def seed() -> None:
 
         _reset(db, instructor)
 
+        organization = db.query(Organization).filter(Organization.join_code == ORGANIZATION_CODE).first()
+        if organization is None:
+            organization = Organization(name=ORGANIZATION_NAME, join_code=ORGANIZATION_CODE)
+            db.add(organization)
+            db.flush()
+        instructor.organization_id = organization.id
+
         courses: dict[str, tuple[Course, list[tuple[Concept, float]]]] = {}
         for code, title, description, units in COURSES:
             course = Course(
@@ -159,6 +190,8 @@ def seed() -> None:
                 code=code,
                 description=description,
                 user_id=instructor.id,
+                organization_id=organization.id,
+                join_code=new_join_code(db, Course.join_code),
                 created_at=now - timedelta(days=45),
             )
             db.add(course)
@@ -166,9 +199,9 @@ def seed() -> None:
 
             concepts = []
             for unit_number, unit_concepts in units.items():
-                for concept_title, difficulty in unit_concepts:
+                for position, (concept_title, difficulty) in enumerate(unit_concepts):
                     concept = Concept(
-                        course_id=course.id, title=concept_title, unit_number=unit_number
+                        course_id=course.id, title=concept_title, unit_number=unit_number, position=position
                     )
                     db.add(concept)
                     concepts.append((concept, difficulty))
@@ -194,6 +227,7 @@ def seed() -> None:
                 email=f"{local_part}@{MOCK_STUDENT_DOMAIN}",
                 password_hash=password_hash,
                 role="student",
+                organization_id=organization.id,
             )
             db.add(student)
             db.flush()
@@ -201,12 +235,16 @@ def seed() -> None:
 
         existing_student = db.query(User).filter(User.email == EXISTING_STUDENT_EMAIL).first()
         if existing_student is not None and existing_student.role == "student":
+            existing_student.organization_id = organization.id
             _enroll_with_profiles(
                 db, rng, existing_student, EXISTING_STUDENT_ABILITY, EXISTING_STUDENT_COURSES, courses, now
             )
 
         db.commit()
 
+        print(f"School: {ORGANIZATION_NAME} (join code {ORGANIZATION_CODE}).")
+        for course, _ in courses.values():
+            print(f"  {course.code}: join code {course.join_code}")
         concept_count = sum(len(concepts) for _, concepts in courses.values())
         print(f"Seeded {len(courses)} courses, {concept_count} concepts and "
               f"{sum(len(r) for r in RESOURCES.values())} resources for {INSTRUCTOR_EMAIL}.")

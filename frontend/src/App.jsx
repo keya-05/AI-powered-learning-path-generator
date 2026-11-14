@@ -5,14 +5,19 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import AppLayout from "./layouts/AppLayout";
 import AIAssistantPage from "./pages/AIAssistantPage";
+import AssessmentPaperPage from "./pages/AssessmentPaperPage";
 import AssessmentsPage from "./pages/AssessmentsPage";
+import AssignmentDetailPage from "./pages/AssignmentDetailPage";
 import CourseContentManagerPage from "./pages/CourseContentManagerPage";
 import DashboardPage from "./pages/DashboardPage";
 import GapInsightsPage from "./pages/GapInsightsPage";
+import InstructorAssignmentsPage from "./pages/InstructorAssignmentsPage";
 import LearningPathPage from "./pages/LearningPathPage";
 import LoginPage from "./pages/LoginPage";
+import MaterialsPage from "./pages/MaterialsPage";
 import MasterKnowledgeGraphPage from "./pages/MasterKnowledgeGraphPage";
 import MyCoursesPage from "./pages/MyCoursesPage";
+import NewAssessmentPage from "./pages/NewAssessmentPage";
 import QuestionBankPage from "./pages/QuestionBankPage";
 import RegisterPage from "./pages/RegisterPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -61,6 +66,30 @@ export default function App() {
                 }
               />
               <Route
+                path="assessments/new"
+                element={
+                  <RoleRoute role="student">
+                    <NewAssessmentPage />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="assessments/:id"
+                element={
+                  <RoleRoute role="student">
+                    <AssessmentPaperPage />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="materials"
+                element={
+                  <RoleRoute role="student">
+                    <MaterialsPage />
+                  </RoleRoute>
+                }
+              />
+              <Route
                 path="assistant"
                 element={
                   <RoleRoute role="student">
@@ -74,6 +103,22 @@ export default function App() {
                 element={
                   <RoleRoute role="instructor">
                     <CourseContentManagerPage />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="assignments"
+                element={
+                  <RoleRoute role="instructor">
+                    <InstructorAssignmentsPage />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="assignments/:id"
+                element={
+                  <RoleRoute role="instructor">
+                    <AssignmentDetailPage />
                   </RoleRoute>
                 }
               />

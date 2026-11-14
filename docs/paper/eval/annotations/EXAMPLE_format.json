@@ -1,0 +1,11 @@
+{
+  "course_code": "CS201",
+  "annotators": ["A", "B"],
+  "concepts": [
+    {"title": "Arrays & Complexity", "unit": 1},
+    {"title": "Linked Lists", "unit": 1},
+    {"title": "Stacks & Queues", "unit": 2}
+  ],
+  "edges_annotator_a": [["Linked Lists", "Arrays & Complexity"], ["Stacks & Queues", "Linked Lists"]],
+  "edges_annotator_b": [["Stacks & Queues", "Linked Lists"]]
+}
