@@ -53,8 +53,9 @@ def wilcoxon(x: list[float], y: list[float]) -> float | None:
     variance = n * (n + 1) * (2 * n + 1) / 24 - sum(t**3 - t for t in ties.values()) / 48
     if variance <= 0:
         return 1.0
-    z = (abs(w_plus - mean) - 0.5) / math.sqrt(variance)
-    return math.erfc(z / math.sqrt(2))
+    # The continuity correction can make the numerator negative; |z| < 0.5 means no evidence.
+    z = max(0.0, abs(w_plus - mean) - 0.5) / math.sqrt(variance)
+    return min(1.0, math.erfc(z / math.sqrt(2)))
 
 
 def prf(predicted: set, gold: set) -> dict:

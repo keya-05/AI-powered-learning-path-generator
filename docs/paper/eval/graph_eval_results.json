@@ -1,0 +1,138 @@
+[
+  {
+    "course": "23CSE4021",
+    "source": "syllabus",
+    "annotators": [
+      "Claude (Anthropic), single annotator, blind to system output; source: syllabus only"
+    ],
+    "extraction_heading_rules": {
+      "predicted": 86,
+      "gold": 83,
+      "strict": {
+        "precision": 0.8488,
+        "recall": 0.8795,
+        "f1": 0.8639,
+        "tp": 73
+      },
+      "lenient": {
+        "precision": 0.8605,
+        "recall": 0.8916,
+        "f1": 0.8757,
+        "tp": 74
+      }
+    },
+    "extraction_llm_stored": {
+      "predicted": 54,
+      "gold": 83,
+      "strict": {
+        "precision": 0.7407,
+        "recall": 0.4819,
+        "f1": 0.5839,
+        "tp": 40
+      },
+      "lenient": {
+        "precision": 0.8704,
+        "recall": 0.5663,
+        "f1": 0.6861,
+        "tp": 47
+      }
+    },
+    "annotator_kappa": null,
+    "gold_edges": 99,
+    "edges_proposed": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "predicted": 20,
+      "gold": 99
+    },
+    "system_edges_total": 33,
+    "system_edges_unmappable": 13,
+    "edges_syllabus_order": {
+      "precision": 0.0168,
+      "recall": 0.1818,
+      "f1": 0.0307,
+      "tp": 18,
+      "predicted": 1074,
+      "gold": 99
+    },
+    "edges_embedding_similarity": {
+      "precision": 0.2703,
+      "recall": 0.202,
+      "f1": 0.2312,
+      "tp": 20,
+      "predicted": 74,
+      "gold": 99
+    },
+    "embedding_threshold": 0.5
+  },
+  {
+    "course": "HPC",
+    "source": "lecture_outline",
+    "annotators": [
+      "Claude (Anthropic), single annotator, blind to system output; source: lecture notes only"
+    ],
+    "extraction_heading_rules": {
+      "predicted": 26,
+      "gold": 61,
+      "strict": {
+        "precision": 0.1538,
+        "recall": 0.0656,
+        "f1": 0.092,
+        "tp": 4
+      },
+      "lenient": {
+        "precision": 0.3077,
+        "recall": 0.1311,
+        "f1": 0.1839,
+        "tp": 8
+      }
+    },
+    "extraction_llm_stored": {
+      "predicted": 46,
+      "gold": 61,
+      "strict": {
+        "precision": 0.3478,
+        "recall": 0.2623,
+        "f1": 0.2991,
+        "tp": 16
+      },
+      "lenient": {
+        "precision": 0.5217,
+        "recall": 0.3934,
+        "f1": 0.4486,
+        "tp": 24
+      }
+    },
+    "annotator_kappa": null,
+    "gold_edges": 79,
+    "edges_proposed": {
+      "precision": 1.0,
+      "recall": 0.0127,
+      "f1": 0.025,
+      "tp": 1,
+      "predicted": 1,
+      "gold": 79
+    },
+    "system_edges_total": 8,
+    "system_edges_unmappable": 7,
+    "edges_syllabus_order": {
+      "precision": 0.0024,
+      "recall": 0.0253,
+      "f1": 0.0044,
+      "tp": 2,
+      "predicted": 820,
+      "gold": 79
+    },
+    "edges_embedding_similarity": {
+      "precision": 0.2047,
+      "recall": 0.3291,
+      "f1": 0.2524,
+      "tp": 26,
+      "predicted": 127,
+      "gold": 79
+    },
+    "embedding_threshold": 0.5
+  }
+]

@@ -52,8 +52,9 @@ def rebuild_course_graph(db: Session, course: Course, *, extract: bool = True, u
             passages = prerequisites.course_passages(course.id)
             details["concepts"] = len(concepts)
             details["passages"] = len(passages)
-            details["links"] = prerequisites.link_concepts(db, course, concepts, passages)
-            details.update(prerequisites.rebuild_edges(db, course, concepts, passages, use_llm=use_llm))
+            linked = prerequisites.link_concepts(db, course, concepts, passages)
+            details["links"] = sum(len(v) for v in linked.values())
+            details.update(prerequisites.rebuild_edges(db, course, concepts, passages, use_llm=use_llm, linked=linked))
             details.update(exam_weights.compute_exam_marks(db, course, concepts))
             _set_status(db, course.id, "ready", details)
         except Exception as error:

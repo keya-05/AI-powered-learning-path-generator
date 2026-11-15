@@ -16,8 +16,12 @@ class Settings(BaseSettings):
     storage_root: str = "./uploaded_resources"
     max_upload_size_mb: int = 25
 
-    # AI assistant. The key is read from backend/.env; when it's empty the SDK
-    # falls back to its own credential chain (env var, `ant auth login` profile).
+    # AI features. LLM_PROVIDER picks "gemini" or "anthropic".
+    llm_provider: str = "anthropic"
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-3.5-flash"
+    # When ANTHROPIC_API_KEY is empty the Anthropic SDK falls back to its own
+    # credential chain (env var, `ant auth login` profile).
     anthropic_api_key: str | None = None
     assistant_model: str = "claude-opus-5-5"
 

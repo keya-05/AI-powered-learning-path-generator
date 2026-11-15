@@ -14,22 +14,19 @@ Guardrails, in the order they apply:
    get an off-topic answer through.
 """
 
-import json
 import logging
 import uuid
 from dataclasses import dataclass
 
-import anthropic
 from sqlalchemy.orm import Session
 
-from app.core.config import get_settings
 from app.models.concept import Concept
 from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.resource import Resource
 from app.models.user import User
 from app.schemas.assistant import AssistantRequest, AssistantResponse, AssistantSource
-from app.services.llm import AIUnavailable, client as _client, reply_json as _reply_json
+from app.services.llm import AIRefused, AIUnavailable, generate_json
 from app.services.retrieval import hybrid_retrieve
 
 logger = logging.getLogger(__name__)
@@ -242,47 +239,15 @@ def answer_question(db: Session, user: User, request: AssistantRequest) -> Assis
         return AssistantResponse(answer=message, in_scope=False, sources=[])
 
     excerpts = _retrieve(db, request.message, courses)
-    settings = get_settings()
-
     try:
-        response = _client().beta.messages.create(
-            model=settings.assistant_model,
-            max_tokens=16000,
-            system=[
-                {"type": "text", "text": _SYSTEM_PROMPT},
-                {"type": "text", "text": f"<courses>\n{_course_catalog(db, courses)}\n</courses>"},
-            ],
+        reply = generate_json(
+            system=f"{_SYSTEM_PROMPT}\n\n<courses>\n{_course_catalog(db, courses)}\n</courses>",
             messages=_build_messages(request, excerpts),
-            output_config={"effort": "medium", "format": {"type": "json_schema", "schema": _RESPONSE_SCHEMA}},
-            cache_control={"type": "ephemeral"},
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
+            schema=_RESPONSE_SCHEMA,
         )
-    except anthropic.AuthenticationError as error:
-        raise AssistantUnavailable(
-            "The AI assistant isn't configured. Set ANTHROPIC_API_KEY in backend/.env."
-        ) from error
-    except anthropic.RateLimitError as error:
-        raise AssistantUnavailable("The assistant is busy right now. Try again in a minute.") from error
-    except (anthropic.APIStatusError, anthropic.APIConnectionError) as error:
-        logger.exception("Assistant request failed")
-        raise AssistantUnavailable("The assistant couldn't be reached. Try again shortly.") from error
-    except TypeError as error:
-        # The SDK raises TypeError when it can't find any credentials.
-        raise AssistantUnavailable(
-            "The AI assistant isn't configured. Set ANTHROPIC_API_KEY in backend/.env."
-        ) from error
-
-    if response.stop_reason == "refusal":
+    except AIRefused:
+        # A declined request gets the same fixed refusal as an out-of-scope one.
         return AssistantResponse(answer=_refusal(courses), in_scope=False, sources=[])
-    if response.stop_reason == "max_tokens":
-        raise AssistantUnavailable("That answer ran too long. Try asking a narrower question.")
-
-    try:
-        reply = _reply_json(response)
-    except (json.JSONDecodeError, ValueError):
-        logger.error("Assistant returned non-JSON content")
-        raise AssistantUnavailable("The assistant gave an unreadable reply. Try again.")
 
     if not reply.get("in_scope") or not str(reply.get("answer", "")).strip():
         return AssistantResponse(answer=_refusal(courses), in_scope=False, sources=[])

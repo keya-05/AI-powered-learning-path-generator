@@ -4,9 +4,12 @@ For every ordered concept pair (a, b) three signals are computed:
 
   o_ab  syllabus order: 1 if b is in an earlier unit than a, 0.5 if both share
         a unit and b is listed first, else 0;
-  c_ab  normalised PMI of the two titles across passages, clipped at 0;
-  l_ab  1 if the course text says a builds on b. Claude judges this from the
-        passages that mention both titles; without an API key a phrase matcher
+  c_ab  normalised PMI of the two concepts across passages, clipped at 0,
+        where a concept occurs in every passage it is linked to: passages
+        naming its title, and its nearest passages by embedding similarity
+        (titles an LLM writes are often paraphrases the notes never use);
+  l_ab  1 if the course text says a builds on b. The LLM judges this from the
+        passages linked to both; without an API key a phrase matcher
         ("builds on", "assumes knowledge of", "is a prerequisite for", ...)
         stands in.
 
@@ -34,10 +37,10 @@ logger = logging.getLogger(__name__)
 
 W_EXPLICIT, W_ORDER, W_COOC = 0.5, 0.3, 0.2
 EDGE_THRESHOLD = 0.4
-# Concepts with no verbatim mention are linked to their nearest passages when
-# the cosine similarity reaches this value.
+# Every concept is also linked to its nearest passages (at most this many)
+# when the cosine similarity reaches this value.
 SEMANTIC_LINK_MIN_SIMILARITY = 0.45
-SEMANTIC_LINKS_PER_CONCEPT = 3
+SEMANTIC_LINKS_PER_CONCEPT = 5
 _MAX_LLM_PAIRS = 80
 _PASSAGES_PER_PAIR = 2
 _PASSAGE_CHARS = 700
@@ -85,52 +88,55 @@ def mention_sets(concepts: list[Concept], passages: list[Passage]) -> dict[uuid.
     return found
 
 
-def link_concepts(db: Session, course: Course, concepts: list[Concept], passages: list[Passage]) -> int:
-    """Replace the course's concept-passage links. Returns the number of links."""
-    db.query(ConceptChunk).filter(ConceptChunk.course_id == course.id).delete()
-    if not passages:
-        db.commit()
-        return 0
-
-    found = mention_sets(concepts, passages)
-    links: dict[tuple[uuid.UUID, str], tuple[Passage, float]] = {}
-    for concept in concepts:
-        for i in found[concept.id]:
-            links[(concept.id, passages[i].chunk_id)] = (passages[i], 1.0)
-
-    # Semantic fallback for concepts the text never names verbatim.
-    unlinked = [c for c in concepts if not found[c.id]]
-    if unlinked:
-        by_id = {p.chunk_id: p for p in passages}
-        try:
-            result = get_chunk_collection().query(
-                query_texts=[c.title for c in unlinked],
-                n_results=min(SEMANTIC_LINKS_PER_CONCEPT, len(passages)),
-                where={"course_id": str(course.id)},
-            )
-            for concept, ids, distances in zip(unlinked, result["ids"], result["distances"]):
-                for cid, distance in zip(ids, distances):
-                    similarity = 1.0 - float(distance)
-                    if similarity >= SEMANTIC_LINK_MIN_SIMILARITY and cid in by_id:
-                        links[(concept.id, cid)] = (by_id[cid], round(similarity, 3))
-        except Exception:
-            logger.warning("Semantic concept linking failed", exc_info=True)
-
-    for (concept_id, chunk_id), (passage, score) in links.items():
-        if not passage.resource_id:
-            continue
-        db.add(
-            ConceptChunk(
-                course_id=course.id,
-                concept_id=concept_id,
-                chunk_id=chunk_id,
-                resource_id=uuid.UUID(passage.resource_id),
-                resource_type=passage.resource_type,
-                score=score,
-            )
+def concept_links(course: Course, concepts: list[Concept], passages: list[Passage]) -> dict[uuid.UUID, dict[int, float]]:
+    """Passage index -> score for each concept: 1.0 where the title is named,
+    else the cosine similarity for its nearest passages above the threshold."""
+    links: dict[uuid.UUID, dict[int, float]] = {c.id: {} for c in concepts}
+    for concept_id, found in mention_sets(concepts, passages).items():
+        for i in found:
+            links[concept_id][i] = 1.0
+    if not passages or not concepts:
+        return links
+    index = {p.chunk_id: i for i, p in enumerate(passages)}
+    try:
+        result = get_chunk_collection().query(
+            query_texts=[c.title for c in concepts],
+            n_results=min(SEMANTIC_LINKS_PER_CONCEPT, len(passages)),
+            where={"course_id": str(course.id)},
         )
+        for concept, ids, distances in zip(concepts, result["ids"], result["distances"]):
+            for cid, distance in zip(ids, distances):
+                similarity = round(1.0 - float(distance), 3)
+                if similarity >= SEMANTIC_LINK_MIN_SIMILARITY and cid in index:
+                    links[concept.id].setdefault(index[cid], similarity)
+    except Exception:
+        logger.warning("Semantic concept linking failed", exc_info=True)
+    return links
+
+
+def link_concepts(
+    db: Session, course: Course, concepts: list[Concept], passages: list[Passage]
+) -> dict[uuid.UUID, set[int]]:
+    """Replace the course's concept-passage links; returns each concept's linked passage indices."""
+    db.query(ConceptChunk).filter(ConceptChunk.course_id == course.id).delete()
+    links = concept_links(course, concepts, passages)
+    for concept_id, scored in links.items():
+        for i, score in scored.items():
+            passage = passages[i]
+            if not passage.resource_id:
+                continue
+            db.add(
+                ConceptChunk(
+                    course_id=course.id,
+                    concept_id=concept_id,
+                    chunk_id=passage.chunk_id,
+                    resource_id=uuid.UUID(passage.resource_id),
+                    resource_type=passage.resource_type,
+                    score=score,
+                )
+            )
     db.commit()
-    return len(links)
+    return {concept_id: set(scored) for concept_id, scored in links.items()}
 
 
 # --------------------------------------------------------------------------
@@ -312,10 +318,17 @@ class Candidate:
 
 
 def score_pairs(
-    concepts: list[Concept], passages: list[Passage], use_llm: bool = True
+    concepts: list[Concept],
+    passages: list[Passage],
+    use_llm: bool = True,
+    linked: dict[uuid.UUID, set[int]] | None = None,
 ) -> tuple[list[Candidate], str]:
-    """All ordered pairs with their three signals. Returns (candidates, explicit-signal method)."""
-    found = mention_sets(concepts, passages)
+    """All ordered pairs with their three signals. Returns (candidates, explicit-signal method).
+
+    `linked` holds each concept's passages (from `link_concepts`); without it,
+    verbatim title mentions are used.
+    """
+    found = linked if linked is not None else mention_sets(concepts, passages)
     n = len(passages)
 
     co_pairs: list[tuple[Concept, Concept, set[int]]] = []
@@ -419,7 +432,12 @@ def break_cycles(db: Session, course_id: uuid.UUID) -> int:
 
 
 def rebuild_edges(
-    db: Session, course: Course, concepts: list[Concept], passages: list[Passage], use_llm: bool = True
+    db: Session,
+    course: Course,
+    concepts: list[Concept],
+    passages: list[Passage],
+    use_llm: bool = True,
+    linked: dict[uuid.UUID, set[int]] | None = None,
 ) -> dict:
     """Recompute automatic edges; instructor edges and rejections are kept."""
     kept = db.query(ConceptPrerequisite).filter(
@@ -433,7 +451,7 @@ def rebuild_edges(
         ConceptPrerequisite.status != "rejected",
     ).delete(synchronize_session=False)
 
-    candidates, method = score_pairs(concepts, passages, use_llm=use_llm)
+    candidates, method = score_pairs(concepts, passages, use_llm=use_llm, linked=linked)
     added = 0
     for cand in candidates:
         if cand.confidence < EDGE_THRESHOLD or (cand.a.id, cand.b.id) in locked:

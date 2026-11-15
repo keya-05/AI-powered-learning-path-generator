@@ -30,16 +30,24 @@ def parse_resource(file_path: str, file_type: str) -> list[ParentBlock]:
     raise ValueError(f"Unsupported file_type for parsing: {file_type}")
 
 
+def _file_unit(file_path: str) -> int:
+    """Unit named in the file name ("Lecture_2_UNIT_3.docx" -> 3), else 1."""
+    return _infer_unit_number(Path(file_path).stem.replace("_", " "), fallback=1)
+
+
 def _parse_pdf(file_path: str) -> list[ParentBlock]:
     blocks: list[ParentBlock] = []
+    unit = _file_unit(file_path)
     with fitz.open(file_path) as doc:
         for page_index, page in enumerate(doc, start=1):
             text = page.get_text("text").strip()
             if not text:
                 continue
+            # A page that names no unit continues the previous page's unit.
+            unit = _infer_unit_number(text, fallback=unit)
             blocks.append(
                 ParentBlock(
-                    unit_number=_infer_unit_number(text, fallback=1),
+                    unit_number=unit,
                     unit_title=_infer_unit_title(text, fallback=f"Page {page_index}"),
                     raw_text=text,
                     page_or_slide_no=page_index,
@@ -50,6 +58,7 @@ def _parse_pdf(file_path: str) -> list[ParentBlock]:
 
 def _parse_pptx(file_path: str) -> list[ParentBlock]:
     blocks: list[ParentBlock] = []
+    unit = _file_unit(file_path)
     presentation = Presentation(file_path)
     for slide_index, slide in enumerate(presentation.slides, start=1):
         text_fragments = [
@@ -60,9 +69,10 @@ def _parse_pptx(file_path: str) -> list[ParentBlock]:
         if not text_fragments:
             continue
         combined_text = "\n".join(text_fragments)
+        unit = _infer_unit_number(combined_text, fallback=unit)
         blocks.append(
             ParentBlock(
-                unit_number=_infer_unit_number(combined_text, fallback=1),
+                unit_number=unit,
                 unit_title=_infer_unit_title(combined_text, fallback=f"Slide {slide_index}"),
                 raw_text=combined_text,
                 page_or_slide_no=slide_index,
@@ -71,32 +81,83 @@ def _parse_pptx(file_path: str) -> list[ParentBlock]:
     return blocks
 
 
-def _parse_docx(file_path: str) -> list[ParentBlock]:
-    # DOCX/mixed formats route through `unstructured` in production; kept as
-    # a narrow adapter so ingestion callers don't need to branch on it.
-    from unstructured.partition.docx import partition_docx
+# A DOCX section ends at the next heading, or once it holds this many words
+# (the chunker splits long sections into passages anyway).
+_DOCX_SECTION_WORDS = 400
 
-    elements = partition_docx(filename=file_path)
+
+def _docx_lines(file_path: str) -> list[tuple[str, bool]]:
+    """(text, is_heading) for every paragraph and table row, in document order.
+
+    A table row becomes one line with its distinct cell texts joined by " | ",
+    so a syllabus laid out as a table keeps its "Unit I | Title | (9 Hours)" rows.
+    """
+    from docx import Document
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
+
+    document = Document(file_path)
+    lines: list[tuple[str, bool]] = []
+    for child in document.element.body.iterchildren():
+        tag = child.tag.rsplit("}", 1)[-1]
+        if tag == "p":
+            paragraph = Paragraph(child, document)
+            text = paragraph.text.strip()
+            if text:
+                style = (paragraph.style.name or "").lower() if paragraph.style is not None else ""
+                lines.append((text, style.startswith(("heading", "title"))))
+        elif tag == "tbl":
+            for row in Table(child, document).rows:
+                cells: list[str] = []
+                for cell in row.cells:  # merged cells repeat; keep each text once
+                    text = " ".join(cell.text.split())
+                    if text and text not in cells:
+                        cells.append(text)
+                if cells:
+                    lines.append((" | ".join(cells), False))
+    return lines
+
+
+def _parse_docx(file_path: str) -> list[ParentBlock]:
     blocks: list[ParentBlock] = []
-    for index, element in enumerate(elements, start=1):
-        text = str(element).strip()
-        if not text:
-            continue
+    unit = _file_unit(file_path)
+    section: list[str] = []
+    words = 0
+
+    def close() -> None:
+        nonlocal unit, section, words
+        if not section:
+            return
+        text = "\n".join(section)
+        unit = _infer_unit_number(text, fallback=unit)
         blocks.append(
             ParentBlock(
-                unit_number=_infer_unit_number(text, fallback=1),
-                unit_title=_infer_unit_title(text, fallback=f"Section {index}"),
+                unit_number=unit,
+                unit_title=_infer_unit_title(text, fallback=f"Section {len(blocks) + 1}"),
                 raw_text=text,
-                page_or_slide_no=index,
+                page_or_slide_no=len(blocks) + 1,
             )
         )
+        section, words = [], 0
+
+    for text, is_heading in _docx_lines(file_path):
+        # A heading, or a syllabus row that opens a unit, starts a new section.
+        if is_heading or _UNIT_PATTERN.match(text) or words >= _DOCX_SECTION_WORDS:
+            close()
+        section.append(text)
+        words += len(text.split())
+    close()
     return blocks
 
 
 # "Unit 3", "UNIT-3", "Unit: 3", "Unit III". The number must follow the word
 # "unit" directly, so a year or page number elsewhere in the block is ignored,
 # and words that merely contain "unit" ("community", "units") don't match.
-_UNIT_PATTERN = re.compile(r"\bunit\s*[-:.#]?\s*(\d{1,2}|[ivx]{1,4})\b", re.IGNORECASE)
+# Dashes include the en and em dash ("Unit – V"). "in unit" / "per unit" are
+# counts, not labels ("Total Lectures in Unit: 3").
+_UNIT_PATTERN = re.compile(
+    r"(?<!\bin )(?<!\bper )\bunit\s*[-–—:.#]?\s*(\d{1,2}|[ivx]{1,4})\b", re.IGNORECASE
+)
 _ROMAN = {"i": 1, "v": 5, "x": 10}
 
 

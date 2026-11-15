@@ -7,17 +7,17 @@
       "Binary search trees"
     ],
     "priority": {
-      "AVL rotations": 0.745,
       "Binary search trees": 0.69,
-      "Linked lists": 0.56,
       "Stacks & queues": 0.52,
+      "AVL rotations": 0.745,
+      "Linked lists": 0.56,
       "Binary trees": 0.58
     },
     "dependency_share": {
-      "AVL rotations": 0.0,
       "Binary search trees": 0.25,
-      "Linked lists": 0.75,
       "Stacks & queues": 0.75,
+      "AVL rotations": 0.0,
+      "Linked lists": 0.75,
       "Binary trees": 0.5
     },
     "deferred": [
@@ -33,33 +33,89 @@
     "proposed": {
       "violation_rate": {
         "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
         "max": 0.0
       },
       "mastered_included": {
         "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
         "max": 0.0
       },
       "needed_covered": {
         "mean": 0.6704,
+        "ci95": [
+          0.6389,
+          0.7016
+        ],
         "max": 1.0
       }
     },
     "syllabus_order": {
       "violation_rate": {
         "mean": 0.3257,
+        "ci95": [
+          0.2932,
+          0.3589
+        ],
         "max": 1.0
       },
       "mastered_included": {
         "mean": 0.2783,
+        "ci95": [
+          0.2595,
+          0.2978
+        ],
         "max": 1.0
       },
       "needed_covered": {
         "mean": 0.4715,
+        "ci95": [
+          0.4463,
+          0.4969
+        ],
         "max": 0.8571
       }
     },
-    "budget_exceeded": 0
+    "wilcoxon_p": {
+      "violation_rate": 7.853873371080677e-29,
+      "mastered_included": 4.2824397530500975e-33,
+      "needed_covered": 6.418952479785553e-34
+    },
+    "budget_exceeded": 0,
+    "generator": {
+      "shuffle_within_units": true,
+      "prerequisites_moved_later": 0.15
+    }
   },
+  "baseline_sensitivity": [
+    {
+      "setting": "syllabus order is a topological order",
+      "baseline_violation_rate": 0.0,
+      "baseline_mastered_included": 0.2813,
+      "proposed_violation_rate": 0.0,
+      "proposed_mastered_included": 0.0
+    },
+    {
+      "setting": "positions shuffled within units",
+      "baseline_violation_rate": 0.2208,
+      "baseline_mastered_included": 0.2853,
+      "proposed_violation_rate": 0.0,
+      "proposed_mastered_included": 0.0
+    },
+    {
+      "setting": "shuffled, 15% of prerequisites listed in a later unit",
+      "baseline_violation_rate": 0.3257,
+      "baseline_mastered_included": 0.2783,
+      "proposed_violation_rate": 0.0,
+      "proposed_mastered_included": 0.0
+    }
+  ],
   "timing": [
     {
       "needed": 10,
@@ -69,27 +125,27 @@
     {
       "needed": 25,
       "edges": 11,
-      "median_ms": 0.136
+      "median_ms": 0.141
     },
     {
       "needed": 50,
       "edges": 50,
-      "median_ms": 0.329
+      "median_ms": 0.302
     },
     {
       "needed": 100,
       "edges": 156,
-      "median_ms": 0.738
+      "median_ms": 0.863
     },
     {
       "needed": 200,
       "edges": 323,
-      "median_ms": 1.753
+      "median_ms": 1.883
     },
     {
       "needed": 400,
       "edges": 690,
-      "median_ms": 4.415
+      "median_ms": 4.899
     }
   ]
 }

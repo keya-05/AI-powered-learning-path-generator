@@ -1,0 +1,276 @@
+[
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "How is a shared memory programming model different from a distributed memory one?",
+    "relevant_contains": [
+      "All processors share a common memory space.",
+      "Each processor has its own local memory."
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "If 10% of my program is sequential, why can't 100 processors give me a 100x speedup?",
+    "relevant_contains": [
+      "limited by the sequential portion of the code",
+      "If 10% of a program is sequential"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "What is a process rank in MPI and what values can it take?",
+    "relevant_contains": [
+      "every process has a unique rank (ID)",
+      "Rank starts from 0 up to (N-1)"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "What is a communicator in MPI, and which one is used by default?",
+    "relevant_contains": [
+      "A communicator is a group of processes that can talk to each other.",
+      "Defines which processes can communicate with each other"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "What is the difference between MPI_Bcast and MPI_Scatter?",
+    "relevant_contains": [
+      "Same data to all processes | Different chunks to each process",
+      "Key Differences: Broadcast vs Scatter"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "Why is using a single broadcast call better than sending the same data with many MPI_Send calls?",
+    "relevant_contains": [
+      "would require multiple MPI_Send, leading to inefficiency",
+      "single call, faster, less error-prone"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "How do MPI_Gather and MPI_Reduce differ in what the root process ends up with?",
+    "relevant_contains": [
+      "many-to-one data collection",
+      "Combines values from all processes and returns the result to the root process"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "When should I use MPI_Allreduce instead of MPI_Reduce?",
+    "relevant_contains": [
+      "distributes the result back to all processes",
+      "Every process ends up with the same reduced value."
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "How is the trapezoidal rule for numerical integration split across MPI processes?",
+    "relevant_contains": [
+      "Each process computes the partial sum of trapezoids",
+      "all partial results are combined using MPI_Reduce"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 3,
+    "question": "How does a parallel bubble sort divide the work among MPI processes, and why isn't the speedup linear?",
+    "relevant_contains": [
+      "Each process sorts its chunk locally using Bubble Sort.",
+      "communication overhead increases with more processes"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "How do CPUs and GPUs differ in their core count and what kind of work they are designed for?",
+    "relevant_contains": [
+      "Few cores (2–16 typically) | Thousands of smaller cores",
+      "Few, complex cores | Many, simpler cores"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "What is a streaming multiprocessor and what hardware units does it contain?",
+    "relevant_contains": [
+      "Each Streaming Multiprocessor (SM) is the heart of the GPU.",
+      "A typical SM includes the following components:"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "Why do I have to copy input data from the host to the device before launching a kernel?",
+    "relevant_contains": [
+      "GPU kernels cannot directly access CPU memory",
+      "the GPU operates on its own dedicated memory space"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "How can I reduce the cost of moving data between the CPU and the GPU?",
+    "relevant_contains": [
+      "Transfer data in bulk, not small pieces.",
+      "Keep data on GPU as long as possible."
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "How do I compute a unique global index for each thread in a 1D CUDA grid?",
+    "relevant_contains": [
+      "To identify a unique thread across the entire grid, use:",
+      "This formula maps each thread to a unique index"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "What does the __global__ qualifier mean and what does <<<1,5>>> do when launching a kernel?",
+    "relevant_contains": [
+      "function runs on GPU, called from CPU",
+      "Launch 1 block with 5 threads"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "What is a warp, and how many warps does a block of 256 threads contain?",
+    "relevant_contains": [
+      "A warp is the basic scheduling unit in CUDA.",
+      "Each warp = 32 threads (fixed by hardware)."
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "What is warp divergence and why does it hurt performance?",
+    "relevant_contains": [
+      "the warp diverges, and the SM executes each path serially",
+      "Avoid conditional branches within a warp"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "How does the warp scheduler decide which warp runs next on an SM?",
+    "relevant_contains": [
+      "decide which warp to execute next",
+      "round-robin or greedy-then-oldest strategy"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "How do I calculate row and column indices for threads when processing an image with 2D blocks?",
+    "relevant_contains": [
+      "Thread Index Calculation (2D):",
+      "To map a 2D coordinate (row, col) to a 1D array index:",
+      "grid size = 64 × 64 blocks"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "What is memory coalescing, and why is the one-thread-per-row matrix-vector kernel not coalesced?",
+    "relevant_contains": [
+      "Memory coalescing occurs when threads in the same warp",
+      "Why Current Code Is Not Coalesced"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 4,
+    "question": "How can shared memory or constant memory be used to speed up matrix-vector multiplication on the GPU?",
+    "relevant_contains": [
+      "loaded once from global memory and reused from fast shared memory",
+      "Constant memory is optimized for broadcasting"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "What is the difference between profiling and debugging a parallel program?",
+    "relevant_contains": [
+      "Profiling is the process of measuring program performance",
+      "Detects and fixes logical or runtime errors in the parallel code."
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "What are the steps to profile a program using gprof?",
+    "relevant_contains": [
+      "Compile with profiling flags",
+      "A file named gmon.out is created automatically.",
+      "gprof ./matrix_mul gmon.out > analysis.txt"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "What causes a race condition versus a deadlock in parallel code, and how do I fix the OpenMP sum race?",
+    "relevant_contains": [
+      "Two threads modify the same variable simultaneously.",
+      "Two processes waiting for each other’s message.",
+      "Use reduction or critical directive"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "What do the compiler optimization levels -O1, -O2, -O3 and -Ofast actually do?",
+    "relevant_contains": [
+      "Aggressive optimization (loop transformations, inlining, vectorization)",
+      "Behavior of Common Optimization Flags"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "When should I use static load balancing versus dynamic load balancing?",
+    "relevant_contains": [
+      "Work divided before execution",
+      "Work assigned at runtime",
+      "Dynamic scheduling reduces idle time"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "What is the difference between strong scaling and weak scaling?",
+    "relevant_contains": [
+      "Fixed problem size, increase processors",
+      "Increase problem size with processors"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "Why is coarse-grained parallelism usually more efficient than fine-grained parallelism?",
+    "relevant_contains": [
+      "Fine-grain parallelism: small units of work",
+      "Coarse-grain parallelism: larger blocks of work"
+    ]
+  },
+  {
+    "course_code": "HPC",
+    "unit": 5,
+    "question": "How do I submit, check and cancel a job on an HPC cluster using SLURM?",
+    "relevant_contains": [
+      "Submit Job | sbatch job.slurm",
+      "Cancel Job | scancel <jobid>"
+    ]
+  }
+]

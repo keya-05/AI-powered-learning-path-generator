@@ -43,12 +43,17 @@ class ExtractedUnit:
 # --------------------------------------------------------------------------
 
 _UNIT_HEADING = re.compile(
-    r"^\s*(?:unit|module)\s*[-:.#]?\s*(\d{1,2}|[ivx]{1,4})\b\s*[:.\-–—)]*\s*(.*)$", re.IGNORECASE
+    r"^\s*(?:unit|module)\s*[-–—:.#]?\s*(\d{1,2}|[ivx]{1,4})\b\s*[:.\-–—)|]*\s*(.*)$", re.IGNORECASE
 )
 _HOURS = re.compile(r"[(\[]?\s*(\d{1,3}(?:\.\d)?)\s*(?:hours?|hrs?|lectures?|l)\s*[)\]]?", re.IGNORECASE)
 _STOP_SECTION = re.compile(
     r"^\s*(text\s*books?|reference\s*books?|references|course\s*outcomes?|course\s*objectives?|"
-    r"assessment|evaluation\s*scheme|suggested\s*reading|e-?resources|mapping\s*of)\b",
+    r"assessment|evaluation\s*scheme|suggested\s*reading|e-?resources|mapping\s*of|learning\s*resources)\b",
+    re.IGNORECASE,
+)
+# Teaching-method rows that many syllabi list under each unit: not topics.
+_SKIP_LINE = re.compile(
+    r"^\s*(?:(?:pedagogy|self[-\s]*study|experiential|ict\s*teaching|project[-\s]*based\s*learning|pbl)\b|case\s*study\s*[/:])",
     re.IGNORECASE,
 )
 _SPLIT = re.compile(r"\s*(?:[,;•▪●◦·]|\s[-–—]\s|\n|\.\s+(?=[A-Z]))\s*")
@@ -66,7 +71,9 @@ def _clean_topic(fragment: str) -> str | None:
     text = re.sub(r"^\s*(?:\d+(?:\.\d+)*[.)]?|[a-z][.)])\s+", "", fragment)  # "1.2 " / "a) "
     text = _HOURS.sub("", text)
     text = re.sub(r"^(?:introduction to|overview of|basics of)\s+", "", text.strip(), flags=re.IGNORECASE)
-    text = text.strip(" .:-–—()[]")
+    text = text.strip(" .:-–—()[]|")
+    if text.count("(") > text.count(")"):  # "Autoregressive (GPT" split at a comma inside brackets
+        text = text.replace("(", "").strip()
     words = text.split()
     if not 1 <= len(words) <= 8 or len(text) < 3 or len(text) > 80:
         return None
@@ -99,12 +106,14 @@ def heading_rule_extract(text: str) -> list[ExtractedUnit]:
             close()
             current, body = None, []
             continue
+        if _SKIP_LINE.match(line):
+            continue
         heading = _UNIT_HEADING.match(line)
         if heading:
             close()
             rest = heading.group(2)
             hours = _HOURS.search(rest)
-            title = _HOURS.sub("", rest).strip(" :.-–—()") or None
+            title = _HOURS.sub("", rest).strip(" :.-–—()|") or None
             current = ExtractedUnit(
                 number=_unit_number(heading.group(1)),
                 title=title[:255] if title else None,
@@ -216,25 +225,107 @@ def syllabus_text(db: Session, course: Course) -> str:
     return "\n\n".join(parts)
 
 
+_LECTURE_TITLE = re.compile(r"^\W*(?:lecture|lec\.?|session|class)\s*\d+\s*[:.\-–—]\s*(.+)$", re.IGNORECASE)
+_DURATION = re.compile(r"^\s*duration\s*:?\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
+_SECTION_HEADING = re.compile(r"^\s*\d+(?:\.\d+)*\.?\s+([A-Z][^.!?]{2,70})$")
+_GENERIC_SECTION = re.compile(
+    r"^(introduction|summary|conclusion|recap|discussion|q\s*&\s*a|questions|references|homework|"
+    r"assignment|activity|quiz|key takeaways|wrap[-\s]?up|learning objectives?)\b",
+    re.IGNORECASE,
+)
+_LECTURE_NUMBER = re.compile(r"(?:lecture|lec)[\s_-]*(\d+)", re.IGNORECASE)
+
+
+def lecture_outline(db: Session, course: Course) -> tuple[str, str]:
+    """A syllabus stand-in built from lecture notes, for a course uploaded without a syllabus.
+
+    Returns (full outline for the LLM, titles-only outline for the heading
+    rules). Each unit lists its lectures in order with their section headings
+    and learning objectives; unit hours are the summed lecture durations.
+    """
+    from app.services.ingestion import _docx_lines
+
+    lectures: list[tuple[int, int, str, float | None, list[str], list[str]]] = []
+    notes = (
+        db.query(Resource)
+        .filter(Resource.course_id == course.id, Resource.resource_type.in_(["notes", "ppt"]))
+        .all()
+    )
+    for resource in notes:
+        if "://" in resource.storage_url or not Path(resource.storage_url).is_file():
+            continue
+        try:
+            blocks = parse_resource(resource.storage_url, resource.file_type)
+            lines = (
+                [t for t, _ in _docx_lines(resource.storage_url)]
+                if resource.file_type == "docx"
+                else [l.strip() for b in blocks for l in b.raw_text.splitlines() if l.strip()]
+            )
+        except Exception:
+            logger.warning("Couldn't read notes %s", resource.id, exc_info=True)
+            continue
+        if not blocks or not lines:
+            continue
+        title_match = next((m for m in (_LECTURE_TITLE.match(l) for l in lines[:5]) if m), None)
+        title = (title_match.group(1) if title_match else lines[0]).strip()[:120]
+        duration = next((float(m.group(1)) for m in (_DURATION.match(l) for l in lines[:10]) if m), None)
+        sections = [
+            m.group(1).strip() for m in (_SECTION_HEADING.match(l) for l in lines) if m and not _GENERIC_SECTION.match(m.group(1))
+        ]
+        objectives: list[str] = []
+        if any(l.lower().startswith("learning objectives") for l in lines[:10]):
+            start = next(i for i, l in enumerate(lines) if l.lower().startswith("learning objectives")) + 1
+            for l in lines[start : start + 8]:
+                if _SECTION_HEADING.match(l):
+                    break
+                if not l.lower().startswith("by the end"):
+                    objectives.append(l)
+        number = _LECTURE_NUMBER.search(resource.file_name)
+        lectures.append((blocks[0].unit_number, int(number.group(1)) if number else 0, title, duration, sections, objectives))
+
+    full, titles = [], []
+    for unit in sorted({l[0] for l in lectures}):
+        in_unit = sorted((l for l in lectures if l[0] == unit), key=lambda l: (l[1], l[2]))
+        known = [l[3] for l in in_unit if l[3] is not None]
+        # Lectures without a stated duration count as the unit's average lecture.
+        hours = f" ({round(sum(known) / len(known) * len(in_unit), 1):g} Hours)" if known else ""
+        full.append(f"Unit {unit}{hours}")
+        titles.append(f"Unit {unit}{hours}")
+        for _, number, title, _, sections, objectives in in_unit:
+            full.append(f"Lecture {number}: {title}")
+            if sections:
+                full.append("  Sections: " + "; ".join(dict.fromkeys(sections)))
+            if objectives:
+                full.append("  Objectives: " + " ".join(objectives))
+            titles.append(f"{title};")  # the heading rules split topics at ";"
+    return "\n".join(full), "\n".join(titles)
+
+
 def extract_course_concepts(db: Session, course: Course) -> dict:
     """Extract concepts and units from the course's syllabus files and merge them in.
 
-    Concepts the course creator typed stay as they are (their units win);
-    extracted concepts are added or moved. Nothing is deleted, so student
-    mastery records are never orphaned by a re-extraction.
+    Without a syllabus, an outline assembled from the lecture notes stands in
+    (`lecture_outline`). Concepts the course creator typed stay as they are
+    (their units win); extracted concepts are added or moved. Nothing is
+    deleted, so student mastery records are never orphaned by a re-extraction.
     """
     text = syllabus_text(db, course)
+    source = "syllabus"
+    rule_text = text
     if not text.strip():
-        return {"method": None, "concepts_extracted": 0, "note": "no readable syllabus"}
+        text, rule_text = lecture_outline(db, course)
+        source = "lecture_outline"
+    if not text.strip():
+        return {"method": None, "source": None, "concepts_extracted": 0, "note": "no syllabus or lecture notes"}
 
     method = "llm"
     try:
-        units = llm_extract(text)
+        units = llm_extract(text if source == "syllabus" else f"(Outline assembled from the course's lecture notes.)\n{text}")
     except AIUnavailable as error:
         logger.info("Concept extraction falling back to heading rules: %s", error)
         units, method = [], "heading_rules"
     if not units:
-        units, method = heading_rule_extract(text), "heading_rules"
+        units, method = heading_rule_extract(rule_text), "heading_rules"
 
     existing = {normalise(c.title): c for c in db.query(Concept).filter(Concept.course_id == course.id)}
     unit_rows = {u.number: u for u in db.query(CourseUnit).filter(CourseUnit.course_id == course.id)}
@@ -269,4 +360,4 @@ def extract_course_concepts(db: Session, course: Course) -> dict:
                 # A typed concept keeps its unit; the syllabus supplies its order within the unit.
                 concept.position = position
     db.commit()
-    return {"method": method, "concepts_extracted": total, "concepts_added": added, "units": len(units)}
+    return {"method": method, "source": source, "concepts_extracted": total, "concepts_added": added, "units": len(units)}

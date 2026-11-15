@@ -24,7 +24,7 @@ Full architecture diagram and rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTUR
 | Backend API | FastAPI (Python 3.12), SQLAlchemy 2.0 |
 | Relational DB | PostgreSQL (accounts, courses, mastery, papers, and the curriculum graph) |
 | Vector DB | ChromaDB, embedded in the backend (all-MiniLM-L6-v2 embeddings) |
-| LLM | Anthropic Claude (concept extraction, prerequisite judgements, assistant, practice papers) |
+| LLM | Google Gemini by default, or Anthropic Claude (`LLM_PROVIDER`): concept extraction, prerequisite judgements, assistant, practice papers |
 | Auth | JWT (python-jose) + bcrypt (PassLib) |
 | Document parsing | PyMuPDF (PDF), python-pptx (PPTX), unstructured (DOCX) |
 | Frontend | React 18 + Vite + Tailwind CSS |
@@ -56,7 +56,7 @@ python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-cp .env.example .env            # then fill in DATABASE_URL, JWT_SECRET_KEY, ANTHROPIC_API_KEY
+cp .env.example .env            # then fill in DATABASE_URL, JWT_SECRET_KEY, GEMINI_API_KEY
 uvicorn app.main:app --reload   # http://localhost:8000
 ```
 
@@ -94,7 +94,7 @@ All routes except `/auth/*` and `/health` require `Authorization: Bearer <token>
 
 ## Environment variables
 
-See [backend/.env.example](backend/.env.example) for the full list (Postgres connection string, JWT secret, Chroma persistence path, upload size limit, Anthropic API key).
+See [backend/.env.example](backend/.env.example) for the full list (Postgres connection string, JWT secret, Chroma persistence path, upload size limit, LLM provider and its API key).
 
 ## Status
 
@@ -114,7 +114,7 @@ python -m scripts.make_sample_docs      # synthetic CS201 syllabus, notes and pa
 python -m scripts.load_sample_course    # ingests them into CS201 and builds its graph
 ```
 
-Without `ANTHROPIC_API_KEY` the graph is built with the deterministic fallbacks; the assistant and paper generation need the key.
+Without an API key the graph is built with the deterministic fallbacks; the assistant and paper generation need the key.
 
 ## Contributors
 

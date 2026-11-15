@@ -1,0 +1,570 @@
+{
+  "course_code": "HPC",
+  "annotators": [
+    "Claude (Anthropic), single annotator, blind to system output; source: lecture notes only"
+  ],
+  "concepts": [
+    {
+      "title": "Shared memory programming model",
+      "unit": 3
+    },
+    {
+      "title": "Distributed memory programming model",
+      "unit": 3
+    },
+    {
+      "title": "Message Passing Interface (MPI)",
+      "unit": 3
+    },
+    {
+      "title": "Scalability in parallel programs",
+      "unit": 3
+    },
+    {
+      "title": "Amdahl's Law",
+      "unit": 3
+    },
+    {
+      "title": "Communication overhead",
+      "unit": 3
+    },
+    {
+      "title": "Load balancing",
+      "unit": 3
+    },
+    {
+      "title": "Parallel speedup",
+      "unit": 3
+    },
+    {
+      "title": "MPI process rank",
+      "unit": 3
+    },
+    {
+      "title": "MPI communicators",
+      "unit": 3
+    },
+    {
+      "title": "MPI program structure",
+      "unit": 3
+    },
+    {
+      "title": "MPI point-to-point communication",
+      "unit": 3
+    },
+    {
+      "title": "MPI collective communication",
+      "unit": 3
+    },
+    {
+      "title": "MPI broadcast",
+      "unit": 3
+    },
+    {
+      "title": "MPI scatter",
+      "unit": 3
+    },
+    {
+      "title": "MPI gather",
+      "unit": 3
+    },
+    {
+      "title": "MPI reduce",
+      "unit": 3
+    },
+    {
+      "title": "MPI Allgather",
+      "unit": 3
+    },
+    {
+      "title": "MPI Allreduce",
+      "unit": 3
+    },
+    {
+      "title": "Parallel prefix sum",
+      "unit": 3
+    },
+    {
+      "title": "MPI matrix-vector multiplication",
+      "unit": 3
+    },
+    {
+      "title": "Parallel bubble sort with MPI",
+      "unit": 3
+    },
+    {
+      "title": "Trapezoidal rule with MPI",
+      "unit": 3
+    },
+    {
+      "title": "CPU vs GPU architecture",
+      "unit": 4
+    },
+    {
+      "title": "SIMD execution model",
+      "unit": 4
+    },
+    {
+      "title": "Streaming Multiprocessors (SMs)",
+      "unit": 4
+    },
+    {
+      "title": "CUDA heterogeneous programming model",
+      "unit": 4
+    },
+    {
+      "title": "CUDA kernel functions",
+      "unit": 4
+    },
+    {
+      "title": "Host-device memory transfer",
+      "unit": 4
+    },
+    {
+      "title": "CUDA program execution flow",
+      "unit": 4
+    },
+    {
+      "title": "Minimizing data transfer overhead",
+      "unit": 4
+    },
+    {
+      "title": "CUDA thread hierarchy",
+      "unit": 4
+    },
+    {
+      "title": "CUDA thread indexing",
+      "unit": 4
+    },
+    {
+      "title": "Multi-dimensional thread blocks",
+      "unit": 4
+    },
+    {
+      "title": "Warps",
+      "unit": 4
+    },
+    {
+      "title": "Warp scheduling",
+      "unit": 4
+    },
+    {
+      "title": "Warp divergence",
+      "unit": 4
+    },
+    {
+      "title": "CUDA vector addition",
+      "unit": 4
+    },
+    {
+      "title": "Image pixel manipulation with 2D blocks",
+      "unit": 4
+    },
+    {
+      "title": "CUDA matrix-vector multiplication",
+      "unit": 4
+    },
+    {
+      "title": "Memory coalescing",
+      "unit": 4
+    },
+    {
+      "title": "CUDA shared memory",
+      "unit": 4
+    },
+    {
+      "title": "CUDA constant memory",
+      "unit": 4
+    },
+    {
+      "title": "Profiling parallel code",
+      "unit": 5
+    },
+    {
+      "title": "Profiling tools (gprof, VTune)",
+      "unit": 5
+    },
+    {
+      "title": "Debugging parallel code",
+      "unit": 5
+    },
+    {
+      "title": "Race conditions",
+      "unit": 5
+    },
+    {
+      "title": "Deadlocks",
+      "unit": 5
+    },
+    {
+      "title": "Granularity of parallelism",
+      "unit": 5
+    },
+    {
+      "title": "Compiler optimization flags",
+      "unit": 5
+    },
+    {
+      "title": "Optimized math libraries (BLAS)",
+      "unit": 5
+    },
+    {
+      "title": "Loop unrolling",
+      "unit": 5
+    },
+    {
+      "title": "Cache-friendly memory access",
+      "unit": 5
+    },
+    {
+      "title": "Minimizing communication overhead",
+      "unit": 5
+    },
+    {
+      "title": "Static and dynamic load balancing",
+      "unit": 5
+    },
+    {
+      "title": "Strong and weak scalability",
+      "unit": 5
+    },
+    {
+      "title": "Domain decomposition",
+      "unit": 5
+    },
+    {
+      "title": "Molecular dynamics with NAMD",
+      "unit": 5
+    },
+    {
+      "title": "CPU-GPU hybrid computation",
+      "unit": 5
+    },
+    {
+      "title": "HPC cluster architecture",
+      "unit": 5
+    },
+    {
+      "title": "Job schedulers (SLURM, PBS)",
+      "unit": 5
+    }
+  ],
+  "edges_annotator_a": [
+    [
+      "Message Passing Interface (MPI)",
+      "Distributed memory programming model"
+    ],
+    [
+      "Scalability in parallel programs",
+      "Parallel speedup"
+    ],
+    [
+      "Scalability in parallel programs",
+      "Communication overhead"
+    ],
+    [
+      "Scalability in parallel programs",
+      "Load balancing"
+    ],
+    [
+      "Amdahl's Law",
+      "Parallel speedup"
+    ],
+    [
+      "Communication overhead",
+      "Distributed memory programming model"
+    ],
+    [
+      "MPI process rank",
+      "Message Passing Interface (MPI)"
+    ],
+    [
+      "MPI communicators",
+      "Message Passing Interface (MPI)"
+    ],
+    [
+      "MPI program structure",
+      "MPI process rank"
+    ],
+    [
+      "MPI program structure",
+      "MPI communicators"
+    ],
+    [
+      "MPI point-to-point communication",
+      "MPI program structure"
+    ],
+    [
+      "MPI collective communication",
+      "MPI program structure"
+    ],
+    [
+      "MPI broadcast",
+      "MPI collective communication"
+    ],
+    [
+      "MPI scatter",
+      "MPI collective communication"
+    ],
+    [
+      "MPI gather",
+      "MPI collective communication"
+    ],
+    [
+      "MPI reduce",
+      "MPI collective communication"
+    ],
+    [
+      "MPI Allgather",
+      "MPI gather"
+    ],
+    [
+      "MPI Allreduce",
+      "MPI reduce"
+    ],
+    [
+      "Parallel prefix sum",
+      "MPI Allgather"
+    ],
+    [
+      "Parallel prefix sum",
+      "MPI Allreduce"
+    ],
+    [
+      "MPI matrix-vector multiplication",
+      "MPI broadcast"
+    ],
+    [
+      "MPI matrix-vector multiplication",
+      "MPI scatter"
+    ],
+    [
+      "MPI matrix-vector multiplication",
+      "MPI gather"
+    ],
+    [
+      "Parallel bubble sort with MPI",
+      "MPI scatter"
+    ],
+    [
+      "Parallel bubble sort with MPI",
+      "MPI gather"
+    ],
+    [
+      "Parallel bubble sort with MPI",
+      "MPI point-to-point communication"
+    ],
+    [
+      "Parallel bubble sort with MPI",
+      "Parallel speedup"
+    ],
+    [
+      "Trapezoidal rule with MPI",
+      "MPI reduce"
+    ],
+    [
+      "SIMD execution model",
+      "CPU vs GPU architecture"
+    ],
+    [
+      "Streaming Multiprocessors (SMs)",
+      "CPU vs GPU architecture"
+    ],
+    [
+      "CUDA heterogeneous programming model",
+      "CPU vs GPU architecture"
+    ],
+    [
+      "CUDA kernel functions",
+      "CUDA heterogeneous programming model"
+    ],
+    [
+      "Host-device memory transfer",
+      "CUDA heterogeneous programming model"
+    ],
+    [
+      "CUDA program execution flow",
+      "CUDA kernel functions"
+    ],
+    [
+      "CUDA program execution flow",
+      "Host-device memory transfer"
+    ],
+    [
+      "Minimizing data transfer overhead",
+      "Host-device memory transfer"
+    ],
+    [
+      "CUDA thread hierarchy",
+      "CUDA kernel functions"
+    ],
+    [
+      "CUDA thread hierarchy",
+      "Streaming Multiprocessors (SMs)"
+    ],
+    [
+      "CUDA thread indexing",
+      "CUDA thread hierarchy"
+    ],
+    [
+      "Multi-dimensional thread blocks",
+      "CUDA thread indexing"
+    ],
+    [
+      "Warps",
+      "Streaming Multiprocessors (SMs)"
+    ],
+    [
+      "Warps",
+      "CUDA thread hierarchy"
+    ],
+    [
+      "Warps",
+      "SIMD execution model"
+    ],
+    [
+      "Warp scheduling",
+      "Warps"
+    ],
+    [
+      "Warp divergence",
+      "Warps"
+    ],
+    [
+      "CUDA vector addition",
+      "CUDA program execution flow"
+    ],
+    [
+      "CUDA vector addition",
+      "CUDA thread indexing"
+    ],
+    [
+      "Image pixel manipulation with 2D blocks",
+      "Multi-dimensional thread blocks"
+    ],
+    [
+      "Image pixel manipulation with 2D blocks",
+      "CUDA program execution flow"
+    ],
+    [
+      "CUDA matrix-vector multiplication",
+      "CUDA program execution flow"
+    ],
+    [
+      "CUDA matrix-vector multiplication",
+      "CUDA thread indexing"
+    ],
+    [
+      "Memory coalescing",
+      "Warps"
+    ],
+    [
+      "Memory coalescing",
+      "CUDA matrix-vector multiplication"
+    ],
+    [
+      "CUDA shared memory",
+      "CUDA thread hierarchy"
+    ],
+    [
+      "CUDA shared memory",
+      "Streaming Multiprocessors (SMs)"
+    ],
+    [
+      "CUDA constant memory",
+      "Host-device memory transfer"
+    ],
+    [
+      "CUDA constant memory",
+      "Warps"
+    ],
+    [
+      "Profiling tools (gprof, VTune)",
+      "Profiling parallel code"
+    ],
+    [
+      "Debugging parallel code",
+      "Race conditions"
+    ],
+    [
+      "Debugging parallel code",
+      "Deadlocks"
+    ],
+    [
+      "Race conditions",
+      "Shared memory programming model"
+    ],
+    [
+      "Deadlocks",
+      "MPI point-to-point communication"
+    ],
+    [
+      "Granularity of parallelism",
+      "Communication overhead"
+    ],
+    [
+      "Compiler optimization flags",
+      "Loop unrolling"
+    ],
+    [
+      "Compiler optimization flags",
+      "SIMD execution model"
+    ],
+    [
+      "Minimizing communication overhead",
+      "Communication overhead"
+    ],
+    [
+      "Minimizing communication overhead",
+      "MPI point-to-point communication"
+    ],
+    [
+      "Minimizing communication overhead",
+      "MPI broadcast"
+    ],
+    [
+      "Static and dynamic load balancing",
+      "Load balancing"
+    ],
+    [
+      "Strong and weak scalability",
+      "Scalability in parallel programs"
+    ],
+    [
+      "Strong and weak scalability",
+      "Amdahl's Law"
+    ],
+    [
+      "Domain decomposition",
+      "MPI point-to-point communication"
+    ],
+    [
+      "Molecular dynamics with NAMD",
+      "Domain decomposition"
+    ],
+    [
+      "Molecular dynamics with NAMD",
+      "CPU-GPU hybrid computation"
+    ],
+    [
+      "Molecular dynamics with NAMD",
+      "Strong and weak scalability"
+    ],
+    [
+      "CPU-GPU hybrid computation",
+      "CUDA heterogeneous programming model"
+    ],
+    [
+      "HPC cluster architecture",
+      "Distributed memory programming model"
+    ],
+    [
+      "Job schedulers (SLURM, PBS)",
+      "HPC cluster architecture"
+    ],
+    [
+      "Job schedulers (SLURM, PBS)",
+      "MPI program structure"
+    ]
+  ]
+}

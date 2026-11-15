@@ -66,8 +66,9 @@ class BM25:
 
 
 def relevant(text: str, phrases: list[str]) -> bool:
-    low = text.lower()
-    return any(p.lower() in low for p in phrases)
+    """Case- and whitespace-insensitive: stored passages collapse whitespace."""
+    low = " ".join(text.lower().split())
+    return any(" ".join(p.lower().split()) in low for p in phrases)
 
 
 def metrics(texts: list[str], phrases: list[str]) -> tuple[float, float]:

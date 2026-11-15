@@ -1,0 +1,44 @@
+{
+  "questions": 30,
+  "k": 5,
+  "original": {
+    "passages": 85,
+    "unembedded_share_mean": 0.5001,
+    "p@5": {
+      "mean": 0.22,
+      "ci95": [
+        0.18,
+        0.2667
+      ]
+    },
+    "mrr": {
+      "mean": 0.7184,
+      "ci95": [
+        0.5914,
+        0.8344
+      ]
+    }
+  },
+  "corrected": {
+    "passages": 155,
+    "unembedded_share_mean": 0.0,
+    "p@5": {
+      "mean": 0.2533,
+      "ci95": [
+        0.2067,
+        0.3
+      ]
+    },
+    "mrr": {
+      "mean": 0.7312,
+      "ci95": [
+        0.6107,
+        0.8444
+      ]
+    }
+  },
+  "p_corrected_vs_original": {
+    "p@5": 0.18304174424792416,
+    "mrr": 0.9373525778887739
+  }
+}

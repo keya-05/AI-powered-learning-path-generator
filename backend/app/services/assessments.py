@@ -28,18 +28,16 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-import anthropic
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.config import get_settings
 from app.db.vector_store import get_chunk_collection
 from app.models.assessment import Assessment
 from app.models.concept import Concept
 from app.models.course import Course
 from app.models.knowledge_profile import StudentKnowledgeProfile
 from app.models.user import User
-from app.services.llm import AIUnavailable, client, reply_json
+from app.services.llm import AIRefused, AIUnavailable, generate_json
 
 logger = logging.getLogger(__name__)
 
@@ -306,7 +304,6 @@ _PAPER_STYLE = {
 
 
 def _call_model(course: Course, topics: list[PlannedTopic], style: str | None = None) -> dict:
-    settings = get_settings()
     total = sum(t.question_count for t in topics)
     style_text = f"<paper_style>\n{_PAPER_STYLE[style]}\n</paper_style>\n\n" if style in _PAPER_STYLE else ""
     user_message = (
@@ -316,36 +313,10 @@ def _call_model(course: Course, topics: list[PlannedTopic], style: str | None = 
         f"<course_material>\n{_excerpts(course, topics)}\n</course_material>\n\n"
         f"Write the {total} questions."
     )
-    unconfigured = "Paper generation isn't configured. Set ANTHROPIC_API_KEY in backend/.env."
     try:
-        response = client().beta.messages.create(
-            model=settings.assistant_model,
-            max_tokens=16000,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
-            output_config={"effort": "medium", "format": {"type": "json_schema", "schema": _RESPONSE_SCHEMA}},
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
-        )
-    except anthropic.AuthenticationError as error:
-        raise AIUnavailable(unconfigured) from error
-    except anthropic.RateLimitError as error:
-        raise AIUnavailable("The question generator is busy right now. Try again in a minute.") from error
-    except (anthropic.APIStatusError, anthropic.APIConnectionError) as error:
-        logger.exception("Assessment generation failed")
-        raise AIUnavailable("The question generator couldn't be reached. Try again shortly.") from error
-    except TypeError as error:
-        # The SDK raises TypeError when it can't find any credentials.
-        raise AIUnavailable(unconfigured) from error
-
-    if response.stop_reason == "refusal":
-        raise AIUnavailable("The question generator declined this request. Try different topics.")
-    if response.stop_reason == "max_tokens":
-        raise AIUnavailable("That paper ran too long to generate. Try fewer questions.")
-    try:
-        return reply_json(response)
-    except ValueError as error:
-        raise AIUnavailable("The question generator gave an unreadable reply. Try again.") from error
+        return generate_json(system=_SYSTEM_PROMPT, messages=user_message, schema=_RESPONSE_SCHEMA)
+    except AIRefused as error:
+        raise AIUnavailable("The question generator declined this request. Try different topics.") from error
 
 
 def _clean_questions(raw: dict, topics: list[PlannedTopic]) -> list[dict]:
