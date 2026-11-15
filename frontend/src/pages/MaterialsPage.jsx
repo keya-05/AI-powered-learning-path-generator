@@ -1,4 +1,4 @@
-import { Download, FileText, Loader2, Presentation, Trash2 } from "lucide-react";
+import { Download, FileText, Loader2, Presentation, RotateCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ResourceUploader from "../components/ResourceUploader";
@@ -8,7 +8,7 @@ import PageHeader from "../components/ui/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "../components/ui/States";
 import { useCourses } from "../hooks/useCourses";
 import { useSelectedCourse } from "../hooks/useSelectedCourse";
-import { deleteMaterial, downloadMaterial, errorDetail, fetchCourseMaterials } from "../services/api";
+import { deleteMaterial, downloadMaterial, errorDetail, fetchCourseMaterials, retryMaterial } from "../services/api";
 
 // Syllabus first, then teaching material, then past papers.
 const GROUPS = [
@@ -22,7 +22,7 @@ const FILE_ICON = { pdf: FileText, docx: FileText, pptx: Presentation };
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
 
-function MaterialRow({ material, courseId, onDelete }) {
+function MaterialRow({ material, courseId, onDelete, onChanged }) {
   const [state, setState] = useState({ busy: false, error: null });
   const Icon = FILE_ICON[material.file_type] ?? FileText;
 
@@ -33,6 +33,17 @@ function MaterialRow({ material, courseId, onDelete }) {
       setState({ busy: false, error: null });
     } catch (err) {
       setState({ busy: false, error: await errorDetail(err, "Download failed. Try again.") });
+    }
+  };
+
+  const handleRetry = async () => {
+    setState({ busy: true, error: null });
+    try {
+      await retryMaterial(courseId, material.id);
+      setState({ busy: false, error: null });
+      onChanged?.();
+    } catch (err) {
+      setState({ busy: false, error: err.response?.data?.detail || "Couldn't retry the file. Try again." });
     }
   };
 
@@ -69,6 +80,18 @@ function MaterialRow({ material, courseId, onDelete }) {
       <div className="flex flex-none items-center gap-2">
         {onDelete && material.processing_status && material.processing_status !== "indexed" && (
           <StatusBadge status={material.processing_status} />
+        )}
+        {onDelete && material.processing_status === "failed" && (
+          <button
+            type="button"
+            onClick={handleRetry}
+            disabled={state.busy}
+            className="btn-secondary py-1.5 text-xs"
+            aria-label={`Retry indexing ${material.file_name}`}
+          >
+            <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
+            Retry
+          </button>
         )}
         {material.available ? (
           <button
@@ -214,6 +237,7 @@ export default function MaterialsPage() {
                     material={material}
                     courseId={courseId}
                     onDelete={own ? removeMaterial : undefined}
+                    onChanged={load}
                   />
                 ))}
               </ul>

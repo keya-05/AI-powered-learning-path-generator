@@ -121,6 +121,11 @@ export async function updateLearningPath(courseId, { objective, examDate, hoursP
   return data;
 }
 
+export async function retryMaterial(courseId, materialId) {
+  const { data } = await apiClient.post(`/courses/${courseId}/resources/${materialId}/retry`);
+  return data;
+}
+
 export async function deleteMaterial(courseId, materialId) {
   await apiClient.delete(`/courses/${courseId}/resources/${materialId}`);
 }

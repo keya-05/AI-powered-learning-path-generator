@@ -1,4 +1,5 @@
 import logging
+import threading
 import uuid
 
 from pathlib import Path
@@ -187,20 +188,98 @@ def _stored_file(resource: Resource) -> Path | None:
     return path
 
 
+# Ingestion runs one file at a time in this process: uploads arrive in bursts
+# (a student adding a whole folder), and parallel runs would compete for the
+# CPU-bound embedder and rebuild the same course graph concurrently. The graph
+# is rebuilt once, after the last queued file of a course, because every
+# rebuild calls the LLM; a syllabus anywhere in the batch makes that rebuild
+# re-extract concepts.
+_ingest_lock = threading.Lock()
+_extract_pending: set[uuid.UUID] = set()
+
+
 def _run_ingestion(resource_id: uuid.UUID) -> None:
+    from app.db.postgres import SessionLocal
+
+    with _ingest_lock:
+        db = SessionLocal()
+        try:
+            resource = db.get(Resource, resource_id)
+            if resource is None:
+                return
+            course = resource.course
+            if resource.resource_type == "syllabus":
+                _extract_pending.add(course.id)
+            try:
+                ingest_resource(db, resource)
+            except Exception:
+                # Marked failed inside; the course graph is still rebuilt below
+                # for the files that did index.
+                logger.exception("Ingestion failed for resource %s", resource_id)
+                db.rollback()
+            still_queued = (
+                db.query(Resource)
+                .filter(
+                    Resource.course_id == course.id,
+                    Resource.id != resource.id,
+                    Resource.processing_status.in_(["pending", "processing"]),
+                )
+                .count()
+            )
+            if still_queued:
+                return
+            extract = course.id in _extract_pending
+            _extract_pending.discard(course.id)
+            rebuild_course_graph(db, course, extract=extract)
+        except Exception:
+            logger.exception("Graph rebuild failed after resource %s", resource_id)
+        finally:
+            db.close()
+
+
+def resume_interrupted_ingestion() -> None:
+    """Re-queue files a previous server process left pending or processing
+    (a restart kills background tasks mid-run). Runs in a daemon thread."""
     from app.db.postgres import SessionLocal
 
     db = SessionLocal()
     try:
-        resource = db.get(Resource, resource_id)
-        if resource is None:
-            return
-        ingest_resource(db, resource)
-        # Graph branch: re-extract concepts only when a syllabus arrives; every
-        # upload refreshes concept links, prerequisite edges and exam weights.
-        course = resource.course
-        rebuild_course_graph(db, course, extract=resource.resource_type == "syllabus")
-    except Exception:
-        logger.exception("Ingestion failed for resource %s", resource_id)
+        stuck = (
+            db.query(Resource)
+            .filter(Resource.processing_status.in_(["pending", "processing"]))
+            .order_by(Resource.created_at)
+            .all()
+        )
+        for resource in stuck:
+            resource.processing_status = "pending"
+        db.commit()
+        ids = [r.id for r in stuck]
     finally:
         db.close()
+    if ids:
+        logger.info("Resuming ingestion of %d interrupted file(s)", len(ids))
+        threading.Thread(target=lambda: [_run_ingestion(i) for i in ids], daemon=True).start()
+
+
+@router.post("/{course_id}/resources/{resource_id}/retry", response_model=ResourceResponse)
+def retry_resource(
+    course_id: uuid.UUID,
+    resource_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Resource:
+    """Index a file again after it failed."""
+    get_owned_course_or_404(db, course_id, current_user.id)
+    resource = db.query(Resource).filter(Resource.id == resource_id, Resource.course_id == course_id).first()
+    if resource is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Material not found.")
+    if resource.processing_status != "failed":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only a file that failed can be retried.")
+    if _stored_file(resource) is None:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="The file is no longer on the server. Upload it again.")
+    resource.processing_status = "pending"
+    db.commit()
+    db.refresh(resource)
+    background_tasks.add_task(_run_ingestion, resource.id)
+    return resource

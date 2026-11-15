@@ -31,6 +31,7 @@ app.include_router(learning_path.router)
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     upgrade_schema(engine)
+    resources.resume_interrupted_ingestion()
 
 
 @app.get("/health", tags=["health"])
