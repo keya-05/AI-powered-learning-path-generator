@@ -24,6 +24,10 @@ class AIRefused(AIUnavailable):
     """The model declined the request (safety filter or refusal stop reason)."""
 
 
+class AIQuotaExhausted(AIUnavailable):
+    """The API key's daily request quota is used up; retrying today won't help."""
+
+
 def provider() -> str:
     return get_settings().llm_provider.lower()
 
@@ -106,6 +110,8 @@ def _gemini(system: str, messages: list[dict], schema: dict, max_tokens: int) ->
     except errors.ClientError as error:
         if error.code in (401, 403):
             raise _unconfigured() from error
+        if error.code == 429 and "PerDay" in str(error):
+            raise AIQuotaExhausted("The AI service's daily quota for this key is used up.") from error
         if error.code == 429:
             raise AIUnavailable("The AI service is busy right now. Try again in a minute.") from error
         logger.exception("Gemini rejected the request")

@@ -44,7 +44,7 @@ from app.db.postgres import SessionLocal  # noqa: E402
 from app.models import Course, User  # noqa: E402
 from app.schemas.assistant import AssistantRequest  # noqa: E402
 from app.services import assistant  # noqa: E402
-from app.services.llm import AIRefused, AIUnavailable, generate_json, model_name  # noqa: E402
+from app.services.llm import AIQuotaExhausted, AIRefused, AIUnavailable, generate_json, model_name  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CACHE = HERE / "answer_eval_cache.jsonl"
@@ -122,7 +122,7 @@ def call(fn, pause: float, attempts: int = 4):
         time.sleep(pause)
         try:
             return fn()
-        except AIRefused:
+        except (AIRefused, AIQuotaExhausted):
             raise
         except AIUnavailable as error:
             if attempt == attempts - 1:
